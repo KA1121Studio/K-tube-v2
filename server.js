@@ -244,24 +244,30 @@ app.get('/piped/*', async (req, res) => {
   res.status(503).json({ error: 'All Piped instances failed' });
 });
 
-app.get('/piped-streams/:id', async (req, res) => {
+app.get("/video-info/:id", async (req, res) => {
   try {
-    const videoId = req.params.id;
+    const id = req.params.id;
+    const info = await youtube.getInfo(id);
 
-    const response = await fetch(
-      `https://piped-api.kavin.rocks/streams/${videoId}`
-    );
+    const basic = info.basic_info;
 
-    if (!response.ok) {
-      return res.status(response.status).send("Piped error");
-    }
+    res.json({
+      title: basic.title,
+      description: basic.short_description,
+      viewCount: basic.view_count,
+      likeCount: basic.like_count,
+      publishDate: basic.publish_date,
+      channel: {
+        id: basic.channel_id,
+        name: basic.author,
+        subscriberCount: basic.subscriber_count,
+        thumbnails: basic.channel?.thumbnails || []
+      }
+    });
 
-    const data = await response.json();
-    res.json(data);
-
-  } catch (err) {
-    console.error("piped-streams error:", err);
-    res.status(500).send("Server error");
+  } catch (e) {
+    console.error("video-info error:", e);
+    res.status(500).json({ error: "failed_to_get_video_info" });
   }
 });
 
