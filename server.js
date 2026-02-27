@@ -245,29 +245,30 @@ app.get('/piped/*', async (req, res) => {
 });
 
 app.get("/video-info/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const info = await youtube.getInfo(id);
+  const videoId = req.params.id;
 
-    const basic = info.basic_info;
+  if (!videoId) {
+    return res.status(400).json({ error: "video id required" });
+  }
+
+  try {
+    const yt = await Innertube.create();
+    const info = await yt.getInfo(videoId);
+
+    const description =
+      info?.basic_info?.short_description ||
+      info?.basic_info?.description ||
+      "";
 
     res.json({
-      title: basic.title,
-      description: basic.short_description,
-      viewCount: basic.view_count,
-      likeCount: basic.like_count,
-      publishDate: basic.publish_date,
-      channel: {
-        id: basic.channel_id,
-        name: basic.author,
-        subscriberCount: basic.subscriber_count,
-        thumbnails: basic.channel?.thumbnails || []
-      }
+      description
     });
 
   } catch (e) {
-    console.error("video-info error:", e);
-    res.status(500).json({ error: "failed_to_get_video_info" });
+    console.error("video-info error:", e.message);
+    res.status(500).json({
+      error: "failed_to_get_video_info"
+    });
   }
 });
 
