@@ -405,8 +405,7 @@ async function renderWatch(videoId) {
         observerMap.clear();
         app.innerHTML = `<div>読み込み中...</div>`;
 
-        let metaData = {};
-        let searchData = null;
+
 
         try {
           // メタデータ取得
@@ -458,16 +457,26 @@ if (!streamsDesc) {
   }
 }
 
+let streamData = {};
+let metaData = {};
 
+try {
+  streamData = await pipedFetch(`/streams/${videoId}`);
+} catch (err) {
+  console.warn('streams取得失敗:', err);
+}
 
 const title       = streamData.title || `動画（ID: ${videoId}）`;
-const views       = streamData.views || 0;
+const views       = streamData.viewCount || 0;
 const uploaded    = streamData.uploadDate || '';
 const description = streamData.description || '';
 const chName      = streamData.uploader || '';
 const chId        = streamData.uploaderUrl?.split('/').pop() || '';
 const chThumb     = streamData.uploaderAvatar || '';
 const chSubs      = streamData.uploaderSubscriberCount || 0;
+const likes       = streamData.likeCount || 0;
+
+const escapedDesc = escapeHtml(description || '');
 
           app.innerHTML = `
             <div class="watch-container">
