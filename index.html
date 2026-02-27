@@ -409,7 +409,8 @@ if (res.comments && res.comments.length > 0) {
     // ===== 1. streams 取得（1回だけ） =====
     let streamData = {};
     try {
-      streamData = await pipedFetch(`/streams/${videoId}`);
+      const response = await fetch(`/piped-streams/${videoId}`);
+      streamData = await response.json();
     } catch (err) {
       console.warn('streams取得失敗:', err);
     }
