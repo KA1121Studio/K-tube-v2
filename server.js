@@ -244,6 +244,27 @@ app.get('/piped/*', async (req, res) => {
   res.status(503).json({ error: 'All Piped instances failed' });
 });
 
+app.get('/piped-streams/:id', async (req, res) => {
+  try {
+    const videoId = req.params.id;
+
+    const response = await fetch(
+      `https://piped-api.kavin.rocks/streams/${videoId}`
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).send("Piped error");
+    }
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (err) {
+    console.error("piped-streams error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 app.get("/download", async (req, res) => {
   const url = req.query.url;
   if (!url) {
