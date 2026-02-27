@@ -411,20 +411,7 @@ async function renderWatch(videoId) {
         try {
           // メタデータ取得
           try {
-            const infoRes = await fetch(`/video-info/${videoId}`);
-            const infoData = await infoRes.json();
-
-            const title    = infoData.title || `動画（ID: ${videoId}）`;
-            const views    = infoData.viewCount || 0;
-　　　　　　　const likes    = infoData.likeCount || 0;
-　　　　　　　const uploaded = infoData.publishDate || '';
-　　　　　　　const description = infoData.description || '説明文は取得できませんでした';
-
-　　　　　　　const chName   = infoData.channel?.name || '';
-　　　　　　　const chId     = infoData.channel?.id || '';
-　　　　　　　const chSubs   = infoData.channel?.subscriberCount || 0;
-　　　　　　　const chThumb  = infoData.channel?.thumbnails?.[0]?.url || '';
-                    
+            searchData = await pipedFetch('/search', { q: videoId, filter: 'videos' });
             let items = [];
             if (Array.isArray(searchData)) {
               items = searchData;
@@ -439,8 +426,19 @@ async function renderWatch(videoId) {
           }
 
 
-// 説明文だけ streams → 失敗したら yt-dlp にフォールバック（最強構成）
 let streamsDesc = '';
+
+try {
+  const infoRes = await fetch(`/video-info/${videoId}`);
+  if (infoRes.ok) {
+    const infoData = await infoRes.json();
+    streamsDesc = infoData.description || '';
+  } else {
+    console.warn('video-info status:', infoRes.status);
+  }
+} catch (e) {
+  console.warn('video-info fetch error:', e);
+}
 
 // 1. まず Piped streams を試す
 try {
