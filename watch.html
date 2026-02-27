@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Video Player</title>
+  <style>
+    body { margin:0; background:#000; color:#fff; }
+    video { width:100%; height:100vh; display:block; }
+  </style>
+</head>
+<body>
+
+<video id="video" controls muted playsinline></video>
+<audio id="audio" style="display:none"></audio>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode") || "default";
+const videoId = params.get("id");
+const videoEl = document.getElementById("video");
+const audioEl = document.getElementById("audio");
+
+if (!videoId) {
+  alert("動画IDが必要です");
+} else {
+  const api = mode === "360" ? "/video360" : "/video";
+
+  fetch(`${api}?id=${videoId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.video) {
+        alert("動画URLが取得できません");
+        return;
+      }
+
+      // ★ 共通：video は必ずセット
+      videoEl.src = "/proxy?url=" + encodeURIComponent(data.video);
+
+      if (mode === "360") {
+        // ===== オリジナルプレイヤー２（360p：1本だけ）=====
+        audioEl.remove();   // 音声タグは不要なので削除
+
+        try {
+          localStorage.setItem("last360VideoUrl", data.video);
+
+          // 親（index.html）に取得完了を通知
+          if (window.parent) {
+            window.parent.postMessage("video360-ready", "*");
+          }
+
+          console.log("360p URL saved for download");
+        } catch (e) {
+          console.warn("Failed to save 360p URL", e);
+        }
+
+      } else {
+        // ===== オリジナルプレイヤー１（分離：video + audio）=====
+        if (!data.audio) {
+          alert("音声URLが取得できません");
+          return;
+        }
+
+        audioEl.src = "/proxy?url=" + encodeURIComponent(data.audio);
+
+        // 動画と音声を同期（1 のときだけ）
+        videoEl.addEventListener("play", () => audioEl.play());
+        videoEl.addEventListener("pause", () => audioEl.pause());
+        videoEl.addEventListener("seeking", () => audioEl.currentTime = videoEl.currentTime);
+        videoEl.addEventListener("ratechange", () => audioEl.playbackRate = videoEl.playbackRate);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("動画取得に失敗しました");
+    });
+}
+</script>
+
+</body>
+</html>

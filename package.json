@@ -1,0 +1,16 @@
+{
+  "name": "youtube-clone-integrated",
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.1",
+    "youtubei.js": "^16.0.1"
+  }
+}
