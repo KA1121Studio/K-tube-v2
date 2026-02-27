@@ -411,7 +411,7 @@ async function renderWatch(videoId) {
         try {
           // メタデータ取得
           try {
-            searchData = await pipedFetch('/search', { q: videoId, filter: 'videos' });
+            const streamData = await pipedFetch(`/streams/${videoId}`);
             let items = [];
             if (Array.isArray(searchData)) {
               items = searchData;
@@ -460,24 +460,14 @@ if (!streamsDesc) {
 
 
 
-          const title       = metaData.title       || `動画（ID: ${videoId}）`;
-          const views       = metaData.views       || '---';
-          const likes       = '---';
-          const uploaded    = metaData.uploadedDate || metaData.uploaded || '---';
-
-          const description =
-            streamsDesc ||
-            metaData.description ||
-            '説明文は現在取得できませんでした';
-
-          // ★ ここだけ安定化（必ず string）
-          const safeDescription = String(description || '');
-          const escapedDesc = escapeHtml(safeDescription);
-
-          const chName      = metaData.uploaderName || metaData.uploader || '---';
-          const chId        = metaData.uploaderUrl?.split('/').pop() || '';
-          const chThumb     = metaData.uploaderAvatar || metaData.thumbnail || '';
-          const chSubs      = metaData.uploaderSubscriberCount || 0;
+const title       = streamData.title || `動画（ID: ${videoId}）`;
+const views       = streamData.views || 0;
+const uploaded    = streamData.uploadDate || '';
+const description = streamData.description || '';
+const chName      = streamData.uploader || '';
+const chId        = streamData.uploaderUrl?.split('/').pop() || '';
+const chThumb     = streamData.uploaderAvatar || '';
+const chSubs      = streamData.uploaderSubscriberCount || 0;
 
           app.innerHTML = `
             <div class="watch-container">
