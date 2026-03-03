@@ -12,11 +12,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // server.js の上の方（他の変数宣言の近く）に追加
-let totalViews = 0;                // 総合再生回数（永続化なし版）
-let todayViews = 0;                // 今日の再生回数
+// 元の変数名をアクセス数っぽくリネーム（オプション）
+let totalAccesses = 0;     // ← totalViews から変更
+let todayAccesses = 0;     // ← todayViews から変更
 let todayDate = new Date().toISOString().split('T')[0];
-
-let activeUsers = new Map();       // 現在オンライン（簡易版：IP + タイムスタンプ）
+let activeUsers = new Map();
 const ONLINE_TIMEOUT = 5 * 60 * 1000; // 5分以内のアクセスをオンラインとみなす
 
 // 静的ファイル配信（index.html, watch.html などを直接配信）
@@ -317,7 +317,6 @@ app.get("/stats", (req, res) => {
   const now = Date.now();
   let onlineCount = 0;
 
-  // 5分以上アクティブがないものは削除＆カウント
   for (const [ip, timestamp] of activeUsers.entries()) {
     if (now - timestamp <= ONLINE_TIMEOUT) {
       onlineCount++;
@@ -328,13 +327,13 @@ app.get("/stats", (req, res) => {
 
   const currentDate = new Date().toISOString().split('T')[0];
   if (currentDate !== todayDate) {
-    todayViews = 0;
+    todayAccesses = 0;
     todayDate = currentDate;
   }
 
   res.json({
-    total_views: totalViews,
-    today_views: todayViews,
+    total_views: totalAccesses,    // ここを totalAccesses に
+    today_views: todayAccesses,    // ここも
     online_now: onlineCount
   });
 });
@@ -357,6 +356,35 @@ app.get("/fake-views", (req, res) => {
     total_views: totalViews,
     today_views: todayViews
   });
+});
+
+// ホーム（index.html）アクセス時にカウント
+app.get("/", (req, res) => {
+  totalAccesses++;   // または totalViews++ のままでもOK
+  todayAccesses++;   // 同上
+
+  // 今日の日付リセット（既存コードを流用）
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayAccesses = 0;   // リセット
+    todayDate = currentDate;
+  }
+
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// watch.html（動画ページ）アクセス時にもカウント
+app.get("/watch.html", (req, res) => {
+  totalAccesses++;
+  todayAccesses++;
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayAccesses = 0;
+    todayDate = currentDate;
+  }
+
+  res.sendFile(path.join(__dirname, "watch.html"));
 });
 
 app.listen(PORT, () => {
