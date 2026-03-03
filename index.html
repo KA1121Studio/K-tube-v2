@@ -189,64 +189,38 @@ function renderHome() {
       <div class="video-grid" id="videoGrid"></div>
       
       <!-- 統計表示ブロック -->
-     <div id="statsBlock" style="
-  margin: 1px auto 3px;
-  max-width: 1000px;          /* 極端に広くしすぎないよう調整（必要に応じて変更） */
-  padding: 24px 16px;
-  background: linear-gradient(135deg, #f8f9fa, #ffffff);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);  /* 少し影を強めてカード感UP */
-  text-align: center;
-  border: 1px solid #e0e0e0;   /* 軽い枠線でカードっぽく */
-">
+      <div id="statsBlock" style="
+        margin: 32px auto;
+        max-width: 900px;
+        padding: 24px 16px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+      ">
 
-  <div style="
-    display: flex;
-    justify-content: center;
-    gap: 80px;                 /* 項目間の間隔を少し広げて見やすく */
-    flex-wrap: wrap;
-  ">
-    <!-- 総合アクセス数 -->
-    <div style="min-width: 160px;">
-      <div id="totalViews" style="
-        font-size: 42px;         /* 少し大きくして視認性UP */
-        font-weight: 900;
-        color: #065fd4;
-        line-height: 1.0;
-      ">12,742</div>
-      <div style="
-        margin-top: 8px;
-        font-size: 15px;
-        color: #606060;
-        font-weight: 500;
-      ">総合アクセス数</div>
+        
+        <div style="
+          display: flex;
+          justify-content: center;
+          gap: 60px;
+          flex-wrap: wrap;
+        ">
+<div style="...">
+  <h3 ...>ⓒ K-tube</h3>
+  <div style="display: flex; justify-content: center; gap: 60px; flex-wrap: wrap;">
+    <div style="min-width: 140px;">
+      <div id="onlineNow" ...>---</div>
+      <div ...>現在オンライン</div>
     </div>
-  
-    <!-- 今日のアクセス数 -->
-    <div style="min-width: 160px;">
-      <div id="todayViews" style="
-        font-size: 42px;
-        font-weight: 900;
-        color: #065fd4;
-        line-height: 1.0;
-      ">12,742</div>
-      <div style="
-        margin-top: 8px;
-        font-size: 15px;
-        color: #606060;
-        font-weight: 500;
-      ">今日のアクセス数</div>
+    <div style="min-width: 140px;">
+      <div id="totalViews" ...>---</div>
+      <div ...>総合アクセス数</div> 
     </div>
-  </div>
-
-  <h3 style="
-    margin: 20px 0 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #555;
-    letter-spacing: 0.5px;
-  ">ⓒ K-tube　V.1.32</h3>
-</div>
+    <div style="min-width: 140px;">
+      <div id="todayViews" ...>---</div>
+      <div ...>今日のアクセス数</div> 
+    </div>
   </div>
 </div>
       
