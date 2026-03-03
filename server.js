@@ -11,6 +11,14 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// server.js の上の方（他の変数宣言の近く）に追加
+let totalViews = 0;                // 総合再生回数（永続化なし版）
+let todayViews = 0;                // 今日の再生回数
+let todayDate = new Date().toISOString().split('T')[0];
+
+let activeUsers = new Map();       // 現在オンライン（簡易版：IP + タイムスタンプ）
+const ONLINE_TIMEOUT = 5 * 60 * 1000; // 5分以内のアクセスをオンラインとみなす
+
 // 静的ファイル配信（index.html, watch.html などを直接配信）
 app.use(express.static(__dirname));  // ← これで /index.html, /watch.html が自動で配信される
 
@@ -109,6 +117,29 @@ https://youtu.be/${videoId}`
 app.get("/proxy", async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send("URL required");
+
+  // ──────────────── ここから追加 ────────────────
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+
+  // 同じIPからのアクセスを5分以内に1回だけカウント（重複防止の簡易版）
+  const lastAccess = activeUsers.get(ip) || 0;
+  if (now - lastAccess > ONLINE_TIMEOUT) {
+    // 新規orタイムアウト → オンラインとしてカウント
+    activeUsers.set(ip, now);
+  }
+
+  // 今日の日付チェック＆リセット
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayViews = 0;
+    todayDate = currentDate;
+  }
+
+  // カウントアップ（/proxy が呼ばれる＝動画チャンクが読まれた＝視聴とみなす）
+  totalViews++;
+  todayViews++;
+  // ──────────────── ここまで追加 ────────────────
 
   const range = req.headers.range || "bytes=0-";
 
@@ -279,6 +310,33 @@ app.get("/download", async (req, res) => {
     console.error("Download proxy error:", err);
     res.status(500).send("Download failed");
   }
+});
+
+// 統計取得API
+app.get("/stats", (req, res) => {
+  const now = Date.now();
+  let onlineCount = 0;
+
+  // 5分以上アクティブがないものは削除＆カウント
+  for (const [ip, timestamp] of activeUsers.entries()) {
+    if (now - timestamp <= ONLINE_TIMEOUT) {
+      onlineCount++;
+    } else {
+      activeUsers.delete(ip);
+    }
+  }
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayViews = 0;
+    todayDate = currentDate;
+  }
+
+  res.json({
+    total_views: totalViews,
+    today_views: todayViews,
+    online_now: onlineCount
+  });
 });
 
 
