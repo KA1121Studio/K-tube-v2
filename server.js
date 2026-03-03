@@ -244,34 +244,6 @@ app.get('/piped/*', async (req, res) => {
   res.status(503).json({ error: 'All Piped instances failed' });
 });
 
-app.get("/video-info/:id", async (req, res) => {
-  const videoId = req.params.id;
-
-  if (!videoId) {
-    return res.status(400).json({ error: "video id required" });
-  }
-
-  try {
-    const yt = await Innertube.create();
-    const info = await yt.getInfo(videoId);
-
-    const description =
-      info?.basic_info?.short_description ||
-      info?.basic_info?.description ||
-      "";
-
-    res.json({
-      description
-    });
-
-  } catch (e) {
-    console.error("video-info error:", e.message);
-    res.status(500).json({
-      error: "failed_to_get_video_info"
-    });
-  }
-});
-
 app.get("/download", async (req, res) => {
   const url = req.query.url;
   if (!url) {
