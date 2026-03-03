@@ -210,52 +210,23 @@ function renderHome() {
           gap: 60px;
           flex-wrap: wrap;
         ">
-          <!-- 現在オンライン -->
-          <div style="min-width: 140px;">
-            <div id="onlineNow" style="
-              font-size: 36px;
-              font-weight: 800;
-              color: #065fd4;
-              line-height: 1.1;
-            ">---</div>
-            <div style="
-              margin-top: 6px;
-              font-size: 14px;
-              color: #606060;
-            ">現在オンライン</div>
-          </div>
-          
-          <!-- 総合再生回数 -->
-          <div style="min-width: 140px;">
-            <div id="totalViews" style="
-              font-size: 36px;
-              font-weight: 800;
-              color: #065fd4;
-              line-height: 1.1;
-            ">---</div>
-            <div style="
-              margin-top: 6px;
-              font-size: 14px;
-              color: #606060;
-            ">総合再生回数</div>
-          </div>
-          
-          <!-- 今日の再生回数 -->
-          <div style="min-width: 140px;">
-            <div id="todayViews" style="
-              font-size: 36px;
-              font-weight: 800;
-              color: #065fd4;
-              line-height: 1.1;
-            ">---</div>
-            <div style="
-              margin-top: 6px;
-              font-size: 14px;
-              color: #606060;
-            ">今日の再生回数</div>
-          </div>
-        </div>
-      </div>
+<div style="...">
+  <h3 ...>このサイトのいま</h3>
+  <div style="display: flex; justify-content: center; gap: 60px; flex-wrap: wrap;">
+    <div style="min-width: 140px;">
+      <div id="onlineNow" ...>---</div>
+      <div ...>現在オンライン</div>
+    </div>
+    <div style="min-width: 140px;">
+      <div id="totalViews" ...>---</div>
+      <div ...>総合アクセス数</div>    ← ここを変更
+    </div>
+    <div style="min-width: 140px;">
+      <div id="todayViews" ...>---</div>
+      <div ...>今日のアクセス数</div>  ← ここを変更
+    </div>
+  </div>
+</div>
       
       <div id="homeSentinel" style="height:40px"></div>
     </section>
