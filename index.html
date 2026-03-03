@@ -795,6 +795,25 @@ if (playerSelect && iframe) {
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
       }
+
+     // ページ読み込み完了後に毎回 /fake-views?times=1 を自動実行
+window.addEventListener('load', () => {
+  fetch('/fake-views?times=1')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP エラー: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('ページオープン時に自動でアクセス数 +1 しました', data);
+      loadStats();  // 表示を即時更新
+    })
+    .catch(err => {
+      console.error('自動 +1 に失敗:', err);
+    });
+});
+     
     </script>
 
     <!-- パスワード画面部分（変更なし） -->
