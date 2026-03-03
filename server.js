@@ -339,6 +339,25 @@ app.get("/stats", (req, res) => {
   });
 });
 
+// テスト用：指定回数だけ統計を増やす（セキュリティ的に本番では削除必須）
+app.get("/fake-views", (req, res) => {
+  const times = parseInt(req.query.times) || 1;
+  if (times > 1000 || times < 1) {
+    return res.status(400).json({ error: "回数は1〜1000の間で指定してください" });
+  }
+
+  totalViews += times;
+  todayViews += times;
+
+  console.log(`[FAKE] ${times}回分追加 → total:${totalViews} today:${todayViews}`);
+
+  res.json({
+    success: true,
+    added: times,
+    total_views: totalViews,
+    today_views: todayViews
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
