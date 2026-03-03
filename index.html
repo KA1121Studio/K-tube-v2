@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -105,24 +106,14 @@
       // commentsPageToken はここで1回だけ宣言（重複なし）
       let commentsPageToken = {};
 
-// 元の fmtNum をコメントアウト
-// function fmtNum(n){
-//   if(n==null) return '';
-//   n = Number(n);
-//   if(n>=1e9) return (n/1e9).toFixed(1)+'B';
-//   if(n>=1e6) return (n/1e6).toFixed(1)+'M';
-//   if(n>=1e3) return (n/1e3).toFixed(1)+'K';
-//   return String(n);
-// }
-
-// カンマ区切りで読みやすく
-function fmtNum(n) {
-  if (n == null || isNaN(n)) return '0';
-  n = Number(n);
-  
-  // 整数部分を3桁ごとにカンマで区切る（例: 1234567 → 1,234,567）
-  return n.toLocaleString('en-US');
-}
+      function fmtNum(n){
+        if(n==null) return '';
+        n = Number(n);
+        if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+        if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+        if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+        return String(n);
+      }
 
       function timeAgo(dateStr){
         const d = new Date(dateStr);
@@ -194,66 +185,72 @@ function renderHome() {
       <div style="margin:16px 0 8px; font-weight:700; font-size:20px; color:#0f0f0f;">
         おすすめ
       </div>
-      
+
       <div class="video-grid" id="videoGrid"></div>
-      
-<div id="statsBlock" style="
-  margin: 1px auto 3px;
-  max-width: 10000px;
-  padding: 24px 16px;
-  background: linear-gradient(135deg, #f8f9fa, #ffffff);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  text-align: center;
-">
-  
- 
-  <div style="
-    display: flex;
-    justify-content: center;
-    gap: 60px;
-    flex-wrap: wrap;
-  ">
-    <!-- 現在オンライン を削除（このdivごと削除） -->
- 
-    <!-- 総合アクセス数 -->
-    <div style="min-width: 140px;">
-      <div id="totalViews" style="
-        font-size: 36px;
-        font-weight: 800;
-        color: #065fd4;
-        line-height: 1.1;
-      ">12,742</div>
-      <div style="
-        margin-top: 6px;
-        font-size: 14px;
-        color: #606060;
-      ">総合アクセス数</div>
-    </div>
-   
-    <!-- 今日のアクセス数 -->
-    <div style="min-width: 140px;">
-      <div id="todayViews" style="
-        font-size: 36px;
-        font-weight: 800;
-        color: #065fd4;
-        line-height: 1.1;
-      ">12,742</div>
-      <div style="
-        margin-top: 6px;
-        font-size: 14px;
-        color: #606060;
-      ">今日のアクセス数</div>
-    </div>
-  </div>
-<h3 style="
-    margin: 15px 0 0;
-    font-size: 18px;
-    font-weight: 700;
-    color: #030303;
-  ">ⓒ K-tube　V.1.32</h3></div>
+
+      <!-- 統計表示ブロック -->
+      <div id="statsBlock" style="
+        margin: 1px auto 3px;
+        max-width: 10000px;
+        padding: 24px 16px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+      ">
+
+        <div style="
+          display: flex;
+          justify-content: center;
+          gap: 60px;
+          flex-wrap: wrap;
+        ">
+
+          <!-- 総合アクセス数 -->
+          <div style="min-width: 140px;">
+            <div id="totalViews" style="
+              font-size: 36px;
+              font-weight: 800;
+              color: #065fd4;
+              line-height: 1.1;
+            ">---</div>
+            <div style="
+              margin-top: 6px;
+              font-size: 14px;
+              color: #606060;
+            ">総合アクセス数</div>
+          </div>
+
+          <!-- 今日のアクセス数 -->
+          <div style="min-width: 140px;">
+            <div id="todayViews" style="
+              font-size: 36px;
+              font-weight: 800;
+              color: #065fd4;
+              line-height: 1.1;
+            ">---</div>
+            <div style="
+              margin-top: 6px;
+              font-size: 14px;
+              color: #606060;
+            ">今日のアクセス数</div>
+          </div>
+
+        </div>
+
+        <h3 style="
+          margin: 15px 0 0;
+          font-size: 18px;
+          font-weight: 700;
+          color: #030303;
+        ">ⓒ K-tube　V.1.32</h3>
+
+      </div>
+
+      <div id="homeSentinel" style="height:40px"></div>
     </section>
   `;
+
 
  
   loadHome();
@@ -798,26 +795,6 @@ if (playerSelect && iframe) {
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
       }
-
-     // ページ読み込み完了後に毎回 /fake-views?times=1 を自動実行（同日制限なし）
-window.addEventListener('load', () => {
-  fetch('/fake-views?times=1')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP エラー: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('ページオープン時に自動でアクセス数 +1 しました', data);
-      // 統計表示を即時更新
-      loadStats();
-    })
-    .catch(err => {
-      console.error('自動 +1 に失敗:', err);
-    });
-});
-     
     </script>
 
     <!-- パスワード画面部分（変更なし） -->
