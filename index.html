@@ -197,38 +197,59 @@ function renderHome() {
       
       <div class="video-grid" id="videoGrid"></div>
       
-      <!-- 統計表示ブロック -->
-      <div id="statsBlock" style="
-        margin: 32px auto;
-        max-width: 900px;
-        padding: 24px 16px;
-        background: linear-gradient(135deg, #f8f9fa, #ffffff);
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        text-align: center;
-      ">
-
-        
-        <div style="
-          display: flex;
-          justify-content: center;
-          gap: 60px;
-          flex-wrap: wrap;
-        ">
-<div style="...">
-  <h3 ...>ⓒ K-tube</h3>
-  <div style="display: flex; justify-content: center; gap: 60px; flex-wrap: wrap;">
+<!-- 統計表示ブロック（現在オンラインを削除） -->
+<div id="statsBlock" style="
+  margin: 32px auto;
+  max-width: 900px;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  text-align: center;
+">
+  <h3 style="
+    margin: 0 0 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #030303;
+  ">ⓒ K-tube</h3>
+ 
+  <div style="
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+  ">
+    <!-- 現在オンライン を削除（このdivごと削除） -->
+ 
+    <!-- 総合アクセス数 -->
     <div style="min-width: 140px;">
-      <div id="onlineNow" ...>---</div>
-      <div ...>現在オンライン</div>
+      <div id="totalViews" style="
+        font-size: 36px;
+        font-weight: 800;
+        color: #065fd4;
+        line-height: 1.1;
+      ">---</div>
+      <div style="
+        margin-top: 6px;
+        font-size: 14px;
+        color: #606060;
+      ">総合アクセス数</div>
     </div>
+   
+    <!-- 今日のアクセス数 -->
     <div style="min-width: 140px;">
-      <div id="totalViews" ...>---</div>
-      <div ...>総合アクセス数</div> 
-    </div>
-    <div style="min-width: 140px;">
-      <div id="todayViews" ...>---</div>
-      <div ...>今日のアクセス数</div> 
+      <div id="todayViews" style="
+        font-size: 36px;
+        font-weight: 800;
+        color: #065fd4;
+        line-height: 1.1;
+      ">---</div>
+      <div style="
+        margin-top: 6px;
+        font-size: 14px;
+        color: #606060;
+      ">今日のアクセス数</div>
     </div>
   </div>
 </div>
