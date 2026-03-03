@@ -105,14 +105,24 @@
       // commentsPageToken はここで1回だけ宣言（重複なし）
       let commentsPageToken = {};
 
-      function fmtNum(n){
-        if(n==null) return '';
-        n = Number(n);
-        if(n>=1e9) return (n/1e9).toFixed(1)+'B';
-        if(n>=1e6) return (n/1e6).toFixed(1)+'M';
-        if(n>=1e3) return (n/1e3).toFixed(1)+'K';
-        return String(n);
-      }
+// 元の fmtNum をコメントアウト
+// function fmtNum(n){
+//   if(n==null) return '';
+//   n = Number(n);
+//   if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+//   if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+//   if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+//   return String(n);
+// }
+
+// カンマ区切りで読みやすく
+function fmtNum(n) {
+  if (n == null || isNaN(n)) return '0';
+  n = Number(n);
+  
+  // 整数部分を3桁ごとにカンマで区切る（例: 1234567 → 1,234,567）
+  return n.toLocaleString('en-US');
+}
 
       function timeAgo(dateStr){
         const d = new Date(dateStr);
