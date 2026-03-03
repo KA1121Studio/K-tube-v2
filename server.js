@@ -12,9 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // server.js の上の方（他の変数宣言の近く）に追加
-// 元の変数名をアクセス数っぽくリネーム（オプション）
-let totalAccesses = 0;     // ← totalViews から変更
-let todayAccesses = 0;     // ← todayViews から変更
+let totalAccesses = 0;     // 総合アクセス数
+let todayAccesses = 0;     // 今日のアクセス数
 let todayDate = new Date().toISOString().split('T')[0];
 let activeUsers = new Map();
 const ONLINE_TIMEOUT = 5 * 60 * 1000; // 5分以内のアクセスをオンラインとみなす
@@ -35,28 +34,44 @@ let youtube;
 
 // ルートで index.html を返す（任意だがわかりやすい）
 app.get("/", (req, res) => {
+  totalAccesses++;
+  todayAccesses++;
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayAccesses = 0;
+    todayDate = currentDate;
+  }
+
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // watch.html を明示的に（なくてもOK）
 app.get("/watch.html", (req, res) => {
+  totalAccesses++;
+  todayAccesses++;
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  if (currentDate !== todayDate) {
+    todayAccesses = 0;
+    todayDate = currentDate;
+  }
+
   res.sendFile(path.join(__dirname, "watch.html"));
 });
 
 // ★ yt-dlp で署名付きURLを取得（オリジナルプレイヤー用）
-// server.js の該当部分を以下のように修正または復活させる
 app.get("/video", async (req, res) => {
   const videoId = req.query.id;
   if (!videoId) return res.status(400).json({ error: "video id required" });
 
   try {
-    // yt-dlp で署名付きURLを取得（cookies必須）
     const output = execSync(
       `yt-dlp --cookies youtube-cookies.txt --js-runtimes node --remote-components ejs:github --sleep-requests 1 --user-agent "Mozilla/5.0" --get-url -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]" https://youtu.be/${videoId}`
     ).toString().trim().split("\n");
 
     const videoUrl = output[0] || "";
-    const audioUrl = output[1] || videoUrl;  // 音声分離できない場合は同じURLを使う
+    const audioUrl = output[1] || videoUrl;
 
     if (!videoUrl) {
       throw new Error("No valid stream URL extracted. Cookies may be expired.");
@@ -112,34 +127,28 @@ https://youtu.be/${videoId}`
   }
 });
 
-
-// プロキシ（動画チャンク配信用） ← 重要！これがないと403エラー多発
+// プロキシ（動画チャンク配信用）
 app.get("/proxy", async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send("URL required");
 
-  // ──────────────── ここから追加 ────────────────
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
 
-  // 同じIPからのアクセスを5分以内に1回だけカウント（重複防止の簡易版）
   const lastAccess = activeUsers.get(ip) || 0;
   if (now - lastAccess > ONLINE_TIMEOUT) {
-    // 新規orタイムアウト → オンラインとしてカウント
     activeUsers.set(ip, now);
   }
 
-  // 今日の日付チェック＆リセット
   const currentDate = new Date().toISOString().split('T')[0];
   if (currentDate !== todayDate) {
-    todayViews = 0;
+    todayAccesses = 0;
     todayDate = currentDate;
   }
 
-  // カウントアップ（/proxy が呼ばれる＝動画チャンクが読まれた＝視聴とみなす）
-  totalViews++;
-  todayViews++;
-  // ──────────────── ここまで追加 ────────────────
+  // ここもアクセス数としてカウント（必要に応じてコメントアウト可）
+  totalAccesses++;
+  todayAccesses++;
 
   const range = req.headers.range || "bytes=0-";
 
@@ -163,9 +172,7 @@ app.get("/proxy", async (req, res) => {
   }
 });
 
-
-// server.js に追加（既存の /proxy や他のルートの後でOK）
-
+// サムネイルプロキシ
 app.get("/thumb-proxy", async (req, res) => {
   const url = req.query.url;
   if (!url) {
@@ -199,26 +206,26 @@ app.get("/thumb-proxy", async (req, res) => {
       return res.status(response.status).send("Fetch error");
     }
 
-    const buffer = await response.arrayBuffer();  // バイナリとして取得
+    const buffer = await response.arrayBuffer();
 
     const headers = {
       "Content-Type": response.headers.get("content-type") || "image/webp",
       "Content-Length": buffer.byteLength,
       "Cache-Control": "public, max-age=604800",
-      "Access-Control-Allow-Origin": "*",          // ← これ必須！ORB回避
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET",
       "Vary": "Origin"
     };
 
     res.writeHead(200, headers);
-    res.end(Buffer.from(buffer));  // バイナリ送信
+    res.end(Buffer.from(buffer));
   } catch (err) {
     console.error("Proxy error:", err.message);
     res.status(500).send("Proxy failed");
   }
 });
 
-// HLS用プロキシ（必要なら拡張）
+// HLS用プロキシ
 app.get("/proxy-hls", async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send("URL required");
@@ -227,7 +234,6 @@ app.get("/proxy-hls", async (req, res) => {
     const r = await fetch(url);
     let text = await r.text();
 
-    // m3u8内のURLを /proxy にリライト
     text = text.replace(
       /(https?:\/\/[^\s]+)/g,
       (m) => m.includes("googlevideo.com") ? `/proxy?url=${encodeURIComponent(m)}` : m
@@ -240,7 +246,7 @@ app.get("/proxy-hls", async (req, res) => {
   }
 });
 
-// Piped API プロキシエンドポイント（CORS回避 + 負荷分散用）
+// Piped API プロキシ
 const pipedInstances = [
   'https://api.piped.private.coffee',
   'https://pipedapi.kavin.rocks',
@@ -293,7 +299,6 @@ app.get("/download", async (req, res) => {
       return res.status(response.status).send("Download fetch failed");
     }
 
-    // 強制ダウンロード
     res.setHeader(
       "Content-Disposition",
       'attachment; filename="video_360p.mp4"'
@@ -332,59 +337,35 @@ app.get("/stats", (req, res) => {
   }
 
   res.json({
-    total_views: totalAccesses,    // ここを totalAccesses に
-    today_views: todayAccesses,    // ここも
+    total_views: totalAccesses,
+    today_views: todayAccesses,
     online_now: onlineCount
   });
 });
 
-// テスト用：指定回数だけ統計を増やす（セキュリティ的に本番では削除必須）
+// テスト用：指定回数だけ統計を増やす（本番では削除推奨）
 app.get("/fake-views", (req, res) => {
-  const times = parseInt(req.query.times) || 1;
-  if (times > 1000 || times < 1) {
-    return res.status(400).json({ error: "回数は1〜1000の間で指定してください" });
+  try {
+    const times = parseInt(req.query.times) || 1;
+    if (isNaN(times) || times < 1 || times > 1000) {
+      return res.status(400).json({ error: "回数は1〜1000の間で指定してください" });
+    }
+
+    totalAccesses += times;
+    todayAccesses += times;
+
+    console.log(`[FAKE] ${times}回分追加 → total:${totalAccesses} today:${todayAccesses}`);
+
+    res.json({
+      success: true,
+      added: times,
+      total_views: totalAccesses,
+      today_views: todayAccesses
+    });
+  } catch (err) {
+    console.error("fake-views error:", err);
+    res.status(500).json({ error: "サーバー内部エラー", message: err.message });
   }
-
-  totalViews += times;
-  todayViews += times;
-
-  console.log(`[FAKE] ${times}回分追加 → total:${totalViews} today:${todayViews}`);
-
-  res.json({
-    success: true,
-    added: times,
-    total_views: totalViews,
-    today_views: todayViews
-  });
-});
-
-// ホーム（index.html）アクセス時にカウント
-app.get("/", (req, res) => {
-  totalAccesses++;   // または totalViews++ のままでもOK
-  todayAccesses++;   // 同上
-
-  // 今日の日付リセット（既存コードを流用）
-  const currentDate = new Date().toISOString().split('T')[0];
-  if (currentDate !== todayDate) {
-    todayAccesses = 0;   // リセット
-    todayDate = currentDate;
-  }
-
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// watch.html（動画ページ）アクセス時にもカウント
-app.get("/watch.html", (req, res) => {
-  totalAccesses++;
-  todayAccesses++;
-
-  const currentDate = new Date().toISOString().split('T')[0];
-  if (currentDate !== todayDate) {
-    todayAccesses = 0;
-    todayDate = currentDate;
-  }
-
-  res.sendFile(path.join(__dirname, "watch.html"));
 });
 
 app.listen(PORT, () => {
