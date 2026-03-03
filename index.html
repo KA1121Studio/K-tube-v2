@@ -174,83 +174,200 @@
         renderHome();
       }
 
-      function renderHome() {
-        app.innerHTML = `
-          <section id="homeSection">
-            <div style="margin:12px 0;font-weight:700;font-size:18px">おすすめ</div>
-            <div class="video-grid" id="videoGrid"></div>
-            <div id="homeSentinel" style="height:32px"></div>
-          </section>
-        `;
-        setupHomeInfinite();
-        loadHome();
-      }
+// ────────────────────────────────────────────────
+// ホーム画面関連の関数（修正版）
+// ────────────────────────────────────────────────
 
-      async function loadHome() {
-        if (homeLoading) return;
-        homeLoading = true;
-        const grid = el('videoGrid');
-        try {
-          const data = await pipedFetch('/trending', { region: 'JP' });
-          for (const item of data || []) {
-            const card = await makeVideoCard(item);
-            grid.appendChild(card);
-          }
-        } catch (e) {
-          console.error(e);
-          grid.innerHTML += `<div style="color:#c00">読み込み失敗: ${escapeHtml(e.message)}</div>`;
-        } finally {
-          homeLoading = false;
-        }
-      }
-
-      async function makeVideoCard(item) {
-        const vid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
-        const title = item.title || '';
-        const th = item.thumbnail || '';
-        const chId = item.uploaderUrl?.split('/').pop() || '';
-        const chTitle = item.uploaderName || '';
-        const views = item.views || 0;
-        const publishedAt = item.uploadedDate || item.uploaded || '';
-        const channelThumb = await getChannelThumbPiped(chId);
-
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="thumb" data-vid="${vid}">
-            <img src="${th}" alt="">
+function renderHome() {
+  app.innerHTML = `
+    <section id="homeSection">
+      <div style="margin:16px 0 8px; font-weight:700; font-size:20px; color:#0f0f0f;">
+        おすすめ
+      </div>
+      
+      <div class="video-grid" id="videoGrid"></div>
+      
+      <!-- 統計表示ブロック -->
+      <div id="statsBlock" style="
+        margin: 32px auto;
+        max-width: 900px;
+        padding: 24px 16px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+      ">
+        <h3 style="
+          margin: 0 0 20px;
+          font-size: 18px;
+          font-weight: 700;
+          color: #030303;
+        ">このサイトのいま</h3>
+        
+        <div style="
+          display: flex;
+          justify-content: center;
+          gap: 60px;
+          flex-wrap: wrap;
+        ">
+          <!-- 現在オンライン -->
+          <div style="min-width: 140px;">
+            <div id="onlineNow" style="
+              font-size: 36px;
+              font-weight: 800;
+              color: #065fd4;
+              line-height: 1.1;
+            ">---</div>
+            <div style="
+              margin-top: 6px;
+              font-size: 14px;
+              color: #606060;
+            ">現在オンライン</div>
           </div>
-          <div class="meta">
-            <div class="channel-thumb"><img src="${channelThumb}" alt=""></div>
-            <div class="info">
-              <div class="title">${escapeHtml(title)}</div>
-              <div class="sub">
-                <a href="#channel=${chId}" data-channel="${chId}" class="ch-link">${escapeHtml(chTitle)}</a>
-                ・ ${fmtNum(views)} 回視聴 ・ ${timeAgo(publishedAt)}
-              </div>
-            </div>
+          
+          <!-- 総合再生回数 -->
+          <div style="min-width: 140px;">
+            <div id="totalViews" style="
+              font-size: 36px;
+              font-weight: 800;
+              color: #065fd4;
+              line-height: 1.1;
+            ">---</div>
+            <div style="
+              margin-top: 6px;
+              font-size: 14px;
+              color: #606060;
+            ">総合再生回数</div>
           </div>
-        `;
-        div.querySelector('.thumb').addEventListener('click', () => {
-          location.hash = `watch=${vid}`;
-        });
-        div.querySelector('.ch-link').addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          location.hash = `channel=${chId}`;
-        });
-        return div;
-      }
+          
+          <!-- 今日の再生回数 -->
+          <div style="min-width: 140px;">
+            <div id="todayViews" style="
+              font-size: 36px;
+              font-weight: 800;
+              color: #065fd4;
+              line-height: 1.1;
+            ">---</div>
+            <div style="
+              margin-top: 6px;
+              font-size: 14px;
+              color: #606060;
+            ">今日の再生回数</div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="homeSentinel" style="height:40px"></div>
+    </section>
+  `;
 
-      function setupHomeInfinite() {
-        const sentinel = el('homeSentinel');
-        if (!sentinel) return;
-        const io = new IntersectionObserver(entries => {
-          entries.forEach(ent => { if (ent.isIntersecting) loadHome(); });
-        }, { rootMargin: '400px' });
-        io.observe(sentinel);
-        observerMap.set('home', io);
-      }
+  setupHomeInfinite();
+  loadHome();
+  loadStats();   // 統計データを読み込む
+}
+
+// おすすめ動画の読み込み（変更なし）
+let homeLoading = false;
+
+async function loadHome() {
+  if (homeLoading) return;
+  homeLoading = true;
+  const grid = el('videoGrid');
+  try {
+    const data = await pipedFetch('/trending', { region: 'JP' });
+    for (const item of data || []) {
+      const card = await makeVideoCard(item);
+      grid.appendChild(card);
+    }
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML += `<div style="color:#c00; padding:16px; text-align:center;">
+      読み込み失敗: ${escapeHtml(e.message)}
+    </div>`;
+  } finally {
+    homeLoading = false;
+  }
+}
+
+// 動画カード作成（変更なし）
+async function makeVideoCard(item) {
+  const vid = item.url?.split('v=')[1] || item.url?.split('/').pop() || '';
+  const title = item.title || '';
+  const th = item.thumbnail || '';
+  const chId = item.uploaderUrl?.split('/').pop() || '';
+  const chTitle = item.uploaderName || '';
+  const views = item.views || 0;
+  const publishedAt = item.uploadedDate || item.uploaded || '';
+  const channelThumb = await getChannelThumbPiped(chId);
+
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <div class="thumb" data-vid="${vid}">
+      <img src="${th}" alt="">
+    </div>
+    <div class="meta">
+      <div class="channel-thumb"><img src="${channelThumb}" alt=""></div>
+      <div class="info">
+        <div class="title">${escapeHtml(title)}</div>
+        <div class="sub">
+          <a href="#channel=${chId}" data-channel="${chId}" class="ch-link">${escapeHtml(chTitle)}</a>
+          ・ ${fmtNum(views)} 回視聴 ・ ${timeAgo(publishedAt)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  div.querySelector('.thumb').addEventListener('click', () => {
+    location.hash = `watch=${vid}`;
+  });
+
+  div.querySelector('.ch-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    location.hash = `channel=${chId}`;
+  });
+
+  return div;
+}
+
+// 無限スクロール設定（変更なし）
+function setupHomeInfinite() {
+  const sentinel = el('homeSentinel');
+  if (!sentinel) return;
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(ent => {
+      if (ent.isIntersecting) loadHome();
+    });
+  }, { rootMargin: '400px' });
+
+  io.observe(sentinel);
+  observerMap.set('home', io);
+}
+
+// ────────────────────────────────────────────────
+// 統計データを取得して表示する関数（新規追加）
+// ────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch('/stats');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    const data = await res.json();
+
+    const onlineEl  = document.getElementById('onlineNow');
+    const totalEl   = document.getElementById('totalViews');
+    const todayEl   = document.getElementById('todayViews');
+
+    if (onlineEl)  onlineEl.textContent  = fmtNum(data.online_now  || 0);
+    if (totalEl)   totalEl.textContent   = fmtNum(data.total_views || 0);
+    if (todayEl)   todayEl.textContent   = fmtNum(data.today_views  || 0);
+  } catch (err) {
+    console.warn('統計読み込みエラー:', err);
+    // エラー時は --- のまま（表示崩れ防止）
+  }
+}
 
       async function performSearch(q) {
         if (!q) return renderHome();
