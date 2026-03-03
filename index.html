@@ -330,20 +330,7 @@ async function makeVideoCard(item) {
   return div;
 }
 
-// 無限スクロール設定（変更なし）
-function setupHomeInfinite() {
-  const sentinel = el('homeSentinel');
-  if (!sentinel) return;
 
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(ent => {
-      if (ent.isIntersecting) loadHome();
-    });
-  }, { rootMargin: '400px' });
-
-  io.observe(sentinel);
-  observerMap.set('home', io);
-}
 
 // ────────────────────────────────────────────────
 // 統計データを取得して表示する関数（新規追加）
