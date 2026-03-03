@@ -68,16 +68,178 @@
   pointer-events: none;
 }
 
+ /* 新規追加：サイドバーとトグル制御用変数 */
+:root {
+  --sidebar-width: 0px;
+  --grid-columns: repeat(auto-fill, minmax(280px, 1fr)); /* デフォルト4列くらい */
+  --sidebar-open: false;
+}
+
+.sidebar-open {
+  --sidebar-width: 240px;
+  --grid-columns: repeat(auto-fill, minmax(320px, 1fr)); /* 開いたら少し広めに → 結果的に3列っぽくなる */
+}
+
+/* ヘッダー調整：ロゴの前にメニューアイコン追加 */
+header {
+  padding: 8px 16px;
+  gap: 0; /* 調整 */
+}
+
+/* メニューアイコン（ハンバーガー） */
+.menu-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.menu-btn:hover {
+  background: #eee;
+}
+.menu-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: #111;
+}
+
+/* サイドバー本体 */
+.sidebar {
+  position: fixed;
+  top: 64px; /* ヘッダー高さ分 */
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: #fff;
+  border-right: 1px solid #ddd;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  z-index: 30;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+}
+
+.sidebar li {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  cursor: pointer;
+  color: #111;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sidebar li:hover {
+  background: #f2f2f2;
+}
+
+.sidebar svg {
+  width: 24px;
+  height: 24px;
+  fill: #606060;
+}
+
+/* メインコンテンツを右にずらす（サイドバー開いた時） */
+main .content {
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
+}
+
+/* 動画グリッドの列をCSS変数で制御 */
+.video-grid {
+  grid-template-columns: var(--grid-columns);
+  transition: all 0.3s ease;
+}
+
+/* モバイル対応（900px以下）ではサイドバーをオーバーレイ風に */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 0;
+    overflow: hidden;
+  }
+  .sidebar-open .sidebar {
+    width: 240px;
+  }
+  main .content {
+    margin-left: 0;
+  }
+}
+
 </style>
 </head>
 <body>
-    <header>
-<div class="logo" id="homeBtn" title="Home">
-  <img 
-    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQTXmpmU6QHLKCluDXWal6WsGgBTFTNIrgw&s"
-    alt="logo"
-    style="height:26px; border-radius:5px;"
-  >
+<header>
+  <div class="menu-btn" id="menuToggle" title="メニュー">
+    <!-- YouTube標準ハンバーガー（横3本線） -->
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#111">
+      <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+    </svg>
+  </div>
+
+  <div class="logo" id="homeBtn" title="Home">
+    <img
+      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQTXmpmU6QHLKCluDXWal6WsGgBTFTNIrgw&s"
+      alt="logo"
+      style="height:26px; border-radius:5px;"
+    >
+  </div>
+
+  <div class="search">
+    <input id="searchInput" placeholder="検索" autocomplete="off" />
+  </div>
+
+  <div class="actions">
+    <div title="アカウント" style="width:36px;height:36px;border-radius:50%;background:#eee"></div>
+  </div>
+</header>
+
+<!-- サイドバー（固定） -->
+<div class="sidebar" id="sidebar">
+  <ul>
+    <li data-action="home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="m11.485 2.143-8 4.8-2 1.2a1 1 0 001.03 1.714L3 9.567V20a2 2 0 002 2h6v-7h2v7h6a2 2 0 002-2V9.567l.485.29a1 1 0 001.03-1.714l-2-1.2-8-4.8a1 1 0 00-1.03 0ZM5 8.366l7-4.2 7 4.2V20h-4v-5.5a1.5 1.5 0 00-1.5-1.5h-3A1.5 1.5 0 009 14.5V20H5V8.366Z"></path>
+      </svg>
+      ホーム
+    </li>
+
+    <li data-action="tools">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"></path>
+      </svg>
+      ツール
+    </li>
+
+    <li data-action="games">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M13 19c-1.1 0-2 .9-2 2v1h4v-1c0-1.1-.9-2-2-2zM7 2C4.8 2 3 3.8 3 6v12c0 2.2 1.8 4 4 4h10c2.2 0 4-1.8 4-4V6c0-2.2-1.8-4-4-4H7zm5 14c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zm6-8h-2v2h-2v-2h-2V8h2V6h2v2h2v2z"></path>
+      </svg>
+      ゲーム
+    </li>
+
+    <li data-action="history">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M8.76 1.487a11 11 0 11-7.54 12.706 1 1 0 011.96-.4 9 9 0 0014.254 5.38A9 9 0 0016.79 4.38 9 9 0 004.518 7H7a1 1 0 010 2H1V3a1 1 0 012 0v2.678a11 11 0 015.76-4.192ZM12 6a1 1 0 00-1 1v5.58l.504.288 3.5 2a1 1 0 10.992-1.736L13 11.42V7a1 1 0 00-1-1Z"></path>
+      </svg>
+      履歴
+    </li>
+
+    <li data-action="settings">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12.844 1h-1.687a2 2 0 00-1.962 1.616 3 3 0 01-3.92 2.263 2 2 0 00-2.38.891l-.842 1.46a2 2 0 00.417 2.507 3 3 0 010 4.525 2 2 0 00-.417 2.507l.843 1.46a2 2 0 002.38.892 3.001 3.001 0 013.918 2.263A2 2 0 0011.157 23h1.686a2 2 0 001.963-1.615 3.002 3.002 0 013.92-2.263 2 2 0 002.38-.892l.842-1.46a2 2 0 00-.418-2.507 3 3 0 010-4.526 2 2 0 00.418-2.508l-.843-1.46a2 2 0 00-2.38-.891 3 3 0 01-3.919-2.263A2 2 0 0012.844 1Zm-1.767 2.347a6 6 0 00.08-.347h1.687a4.98 4.98 0 002.407 3.37 4.98 4.98 0 004.122.4l.843 1.46A4.98 4.98 0 0018.5 12a4.98 4.98 0 001.716 3.77l-.843 1.46a4.98 4.98 0 00-4.123.4A4.979 4.979 0 0012.843 21h-1.686a4.98 4.98 0 00-2.408-3.371 4.999 4.999 0 00-4.12-.399l-.844-1.46A4.979 4.979 0 005.5 12a4.98 4.98 0 00-1.715-3.77l.842-1.459a4.98 4.98 0 004.123-.399 4.981 4.981 0 002.327-3.025ZM16 12a4 4 0 11-7.999 0 4 4 0 018 0Zm-4 2a2 2 0 100-4 2 2 0 000 4Z"></path>
+      </svg>
+      設定
+    </li>
+  </ul>
 </div>
 
       <div class="search">
@@ -840,6 +1002,42 @@ window.addEventListener('load', () => {
         fetch('https://teaching-materials-r4zf.onrender.com/', { mode: 'no-cors' }).catch(()=>{});
         fetch('https://teaching-materials-r4zf.onrender.com/watch.html?id=dummy', { mode: 'no-cors' }).catch(()=>{});
       });
+
+     // メニュー開閉
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const appContent = document.querySelector('.content') || document.body; // クリック検知用
+
+let isSidebarOpen = false;
+
+function toggleSidebar() {
+  isSidebarOpen = !isSidebarOpen;
+  document.body.classList.toggle('sidebar-open', isSidebarOpen);
+  sidebar.style.width = isSidebarOpen ? '240px' : '0';
+}
+
+menuToggle.addEventListener('click', toggleSidebar);
+
+// サイドバー外をクリックしたら閉じる
+document.addEventListener('click', (e) => {
+  if (isSidebarOpen && 
+      !sidebar.contains(e.target) && 
+      !menuToggle.contains(e.target)) {
+    toggleSidebar();
+  }
+});
+
+// 今はクリックしても何もしない（後でページ遷移などに使う用）
+sidebar.querySelectorAll('li').forEach(li => {
+  li.addEventListener('click', () => {
+    // 例: ホームだけ今は有効
+    if (li.dataset.action === 'home') {
+      location.hash = '';
+      toggleSidebar(); // 閉じる
+    }
+    // 他の項目は後で実装
+  });
+});
     </script>
 </body>
 </html>
