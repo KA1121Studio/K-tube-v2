@@ -144,15 +144,15 @@
 </style>
 </head>
 <body>
-    <header>
-  <!-- 左端：メニューアイコン（hamburger） -->
+<header>
+  <!-- メニュー（hamburger）ボタン -->
   <div class="menu-btn" id="menuBtn" title="メニュー">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
       <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
     </svg>
   </div>
 
-  <!-- ロゴ（元のを右にずらす） -->
+  <!-- ロゴ -->
   <div class="logo" id="homeBtn" title="Home">
     <img
       src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNQTXmpmU6QHLKCluDXWal6WsGgBTFTNIrgw&s"
@@ -161,8 +161,15 @@
     >
   </div>
 
-  <div class="search">...</div>
-  <div class="actions">...</div>
+  <!-- 検索バー（元のまま復元） -->
+  <div class="search">
+    <input id="searchInput" placeholder="検索" autocomplete="off" />
+  </div>
+
+  <!-- 右端のアクション（アカウントアイコンなど） -->
+  <div class="actions">
+    <div title="アカウント" style="width:36px;height:36px;border-radius:50%;background:#eee"></div>
+  </div>
 </header>
 
 <!-- サイドメニュー -->
