@@ -265,6 +265,17 @@ main.content-main {
   }
 }
 
+/* 再生画面（watchページ）では左サイドバーを非表示にする */
+body.watch-page .sidebar-fixed {
+  display: none;
+}
+
+/* メインコンテンツもフル幅に戻す（左マージンなし） */
+body.watch-page main.content-main {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
 </style>
 </head>
 <body>
@@ -1168,6 +1179,31 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
     // 他のtargetは後で実装
   });
 });
+
+// renderByHash 関数の中に条件を追加（既存の関数を修正）
+function renderByHash() {
+  const h = location.hash.slice(1);
+  
+  // まずbodyからwatch-pageクラスを一旦削除
+  document.body.classList.remove('watch-page');
+  
+  if (!h) {
+    renderHome();
+  } else {
+    const [k, v] = h.split('=');
+    if (k === 'watch') {
+      renderWatch(v);
+      document.body.classList.add('watch-page');  // ← ここで追加！
+    } else if (k === 'channel') {
+      renderChannel(v);
+    } else if (k === 'search') {
+      searchInput.value = decodeURIComponent(v || '');
+      performSearch(decodeURIComponent(v || ''));
+    } else {
+      renderHome();
+    }
+  }
+}
      
     </script>
 
