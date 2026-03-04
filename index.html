@@ -281,6 +281,32 @@ body.watch-page main.content-main {
   aspect-ratio: 16/9;          /* 動画と同じ比率で統一 */
   object-fit: cover;
 }
+
+/* ツール/ゲームのプレイ画面をフル領域に */
+.play-fullscreen {
+  position: fixed;
+  top: 64px;                     /* headerの高さ分 */
+  left: 72px;                    /* 左サイドバーの幅分 */
+  right: 0;
+  bottom: 0;
+  z-index: 20;                   /* headerより下だけどコンテンツの上 */
+  background: #000;              /* 黒背景で没入感 */
+  overflow: hidden;
+}
+
+/* iframeを完全にフィット */
+.play-fullscreen iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* モバイル対応（左バー非表示時） */
+@media (max-width: 900px) {
+  .play-fullscreen {
+    left: 0;                     /* モバイルでは左端まで */
+  }
+}
  
 </style>
 </head>
@@ -1319,20 +1345,12 @@ async function loadGames() {
 // 新しい関数：ゲームプレイ画面（iframe埋め込み）
 function renderGamePlay(game) {
   app.innerHTML = `
-    <div style="padding:16px;">
-      <h1 style="margin:0 0 16px; font-size:24px;">${escapeHtml(game.title)}</h1>
-      <div style="position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden;">
-        <iframe 
-          src="${game.embedUrl}" 
-          frameborder="0" 
-          allowfullscreen 
-          style="position:absolute; top:0; left:0; width:100%; height:100%;"
-        ></iframe>
-      </div>
-      <p style="margin-top:16px; color:#333;">${escapeHtml(game.description || '楽しんでください！')}</p>
-      <button onclick="history.back()" style="margin-top:16px; padding:8px 16px; background:#065fd4; color:white; border:none; border-radius:4px; cursor:pointer;">
-        ゲーム一覧に戻る
-      </button>
+    <div class="play-fullscreen">
+      <iframe 
+        src="${game.embedUrl}" 
+        frameborder="0" 
+        allowfullscreen
+      ></iframe>
     </div>
   `;
 }
@@ -1452,20 +1470,12 @@ async function loadTools() {
 // 新しい関数：ツール実行画面（iframe埋め込み）
 function renderToolPlay(tool) {
   app.innerHTML = `
-    <div style="padding:16px;">
-      <h1 style="margin:0 0 16px; font-size:24px;">${escapeHtml(tool.title)}</h1>
-      <div style="position:relative; width:100%; height:80vh; background:#f8f8f8; border-radius:8px; overflow:hidden; border:1px solid #ddd;">
-        <iframe 
-          src="${tool.embedUrl}" 
-          frameborder="0" 
-          allowfullscreen 
-          style="position:absolute; top:0; left:0; width:100%; height:100%;"
-        ></iframe>
-      </div>
-      <p style="margin-top:16px; color:#333;">${escapeHtml(tool.description || '便利にお使いください！')}</p>
-      <button onclick="history.back()" style="margin-top:16px; padding:8px 16px; background:#065fd4; color:white; border:none; border-radius:4px; cursor:pointer;">
-        ツール一覧に戻る
-      </button>
+    <div class="play-fullscreen">
+      <iframe 
+        src="${tool.embedUrl}" 
+        frameborder="0" 
+        allowfullscreen
+      ></iframe>
     </div>
   `;
 }
