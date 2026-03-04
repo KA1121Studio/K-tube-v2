@@ -1163,12 +1163,18 @@ function updateSidebarActive() {
   items.forEach(item => {
     item.classList.remove('active');
     if ((hash === '' && item.dataset.target === 'home') ||
-        (hash.startsWith('watch=') && item.dataset.target === 'home') ||  // watchもホーム扱い
-        (hash.startsWith('channel=') && item.dataset.target === 'home')) {
-      item.classList.add('active');
+        hash.startsWith('watch=') ||
+        hash.startsWith('channel=') ||
+        hash.startsWith('games') ||
+        hash.startsWith('tools')) {  // ← toolsも追加
+      if (item.dataset.target === 'home' && !hash.startsWith('games') && !hash.startsWith('tools')) {
+        item.classList.add('active');
+      } else if (item.dataset.target === 'games' && hash.startsWith('games')) {
+        item.classList.add('active');
+      } else if (item.dataset.target === 'tools' && hash.startsWith('tools')) {
+        item.classList.add('active');
+      }
     }
-    // 他のページができたらここに追加例：
-    // if (hash === 'tools') item.classList.add('active');
   });
 }
 
@@ -1179,10 +1185,22 @@ window.addEventListener('load', updateSidebarActive);
 // アイテムクリックでホームに戻る（今は全部ホームに飛ばすだけ）
 document.querySelectorAll('.sidebar-item').forEach(item => {
   item.addEventListener('click', () => {
-    if (item.dataset.target === 'home') {
+    const target = item.dataset.target;
+
+    // アクティブクラス更新
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+
+    if (target === 'home') {
       location.hash = '';
+    } else if (target === 'games') {
+      location.hash = 'games';
+      renderGames();
+    } else if (target === 'tools') {
+      location.hash = 'tools';          // ← 新しく追加
+      renderTools();                    // ← 新しい関数呼び出し
     }
-    // 他のtargetは後で実装
+    // 他のメニュー（履歴・設定）は後で
   });
 });
 
@@ -1354,6 +1372,138 @@ function renderByHash() {
   }
 
   // アクティブ更新（既存の関数呼び出し）
+  updateSidebarActive();
+}
+
+ // 新しい関数：ツール一覧画面を表示
+function renderTools() {
+  app.innerHTML = `
+    <section id="toolsSection">
+      <div style="margin:16px 0 8px; font-weight:700; font-size:20px; color:#0f0f0f;">
+        ツール
+      </div>
+      <div class="video-grid" id="toolGrid"></div>
+      <div id="toolsSentinel" style="height:32px"></div>
+    </section>
+  `;
+
+  loadTools();
+}
+
+// ツールデータを読み込んでカードを表示（仮データ）
+async function loadTools() {
+  const grid = document.getElementById('toolGrid');
+  if (!grid) return;
+
+  // 仮のツールデータ（後で本物に置き換え）
+  const fakeTools = [
+    {
+      title: "QRコード作成",
+      thumbnail: "https://img.icons8.com/color/480/qr-code.png",
+      embedUrl: "https://www.the-qrcode-generator.com/",
+      description: "URLやテキストからQRコードをすぐ作れる"
+    },
+    {
+      title: "単位変換ツール",
+      thumbnail: "https://img.icons8.com/color/480/calculator.png",
+      embedUrl: "https://www.unitconverters.net/",
+      description: "長さ・重さ・温度などあらゆる単位を変換"
+    },
+    {
+      title: "ストップウォッチ",
+      thumbnail: "https://img.icons8.com/color/480/stopwatch.png",
+      embedUrl: "https://www.online-stopwatch.com/",
+      description: "シンプルで使いやすいタイマー＆ストップウォッチ"
+    },
+    {
+      title: "パスワード生成器",
+      thumbnail: "https://img.icons8.com/color/480/password.png",
+      embedUrl: "https://passwordsgenerator.net/",
+      description: "強力なランダムパスワードを即生成"
+    },
+    // ここに追加可能
+  ];
+
+  fakeTools.forEach(tool => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="thumb" data-tool="${tool.embedUrl}">
+        <img src="${tool.thumbnail}" alt="${tool.title}" style="aspect-ratio:16/9; object-fit:cover;">
+      </div>
+      <div class="meta">
+        <div class="info">
+          <div class="title">${escapeHtml(tool.title)}</div>
+          <div class="sub">${escapeHtml(tool.description || '')}</div>
+        </div>
+      </div>
+    `;
+
+    // クリックでツール実行画面へ
+    card.querySelector('.thumb').addEventListener('click', () => {
+      location.hash = `playtool=${encodeURIComponent(tool.embedUrl)}`;
+      renderToolPlay(tool);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// 新しい関数：ツール実行画面（iframe埋め込み）
+function renderToolPlay(tool) {
+  app.innerHTML = `
+    <div style="padding:16px;">
+      <h1 style="margin:0 0 16px; font-size:24px;">${escapeHtml(tool.title)}</h1>
+      <div style="position:relative; width:100%; height:80vh; background:#f8f8f8; border-radius:8px; overflow:hidden; border:1px solid #ddd;">
+        <iframe 
+          src="${tool.embedUrl}" 
+          frameborder="0" 
+          allowfullscreen 
+          style="position:absolute; top:0; left:0; width:100%; height:100%;"
+        ></iframe>
+      </div>
+      <p style="margin-top:16px; color:#333;">${escapeHtml(tool.description || '便利にお使いください！')}</p>
+      <button onclick="history.back()" style="margin-top:16px; padding:8px 16px; background:#065fd4; color:white; border:none; border-radius:4px; cursor:pointer;">
+        ツール一覧に戻る
+      </button>
+    </div>
+  `;
+}
+
+// renderByHash を拡張（既存の関数に追加）
+function renderByHash() {
+  const h = location.hash.slice(1);
+  document.body.classList.remove('watch-page');
+
+  if (!h) {
+    renderHome();
+  } else {
+    const [k, v] = h.split('=');
+    if (k === 'watch') {
+      renderWatch(v);
+      document.body.classList.add('watch-page');
+    } else if (k === 'channel') {
+      renderChannel(v);
+    } else if (k === 'search') {
+      searchInput.value = decodeURIComponent(v || '');
+      performSearch(decodeURIComponent(v || ''));
+    } else if (k === 'games') {
+      renderGames();
+    } else if (k === 'playgame') {
+      const url = decodeURIComponent(v || '');
+      const fakeGame = { title: "ゲームプレイ中", embedUrl: url, description: "埋め込みゲーム" };
+      renderGamePlay(fakeGame);
+    } else if (k === 'tools') {
+      renderTools();               // ← 追加
+    } else if (k === 'playtool') {
+      const url = decodeURIComponent(v || '');
+      const fakeTool = { title: "ツール実行中", embedUrl: url, description: "埋め込みツール" };
+      renderToolPlay(fakeTool);
+    } else {
+      renderHome();
+    }
+  }
+
   updateSidebarActive();
 }
      
