@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
@@ -68,54 +67,122 @@
   pointer-events: none;
 }
 
- /* 新規追加：サイドバーとトグル制御用変数 */
-/* 既存の :root はこのように修正 */
+/* メニュー開閉用変数 */
 :root {
-  --sidebar-width: 0px;
-  --grid-columns: repeat(auto-fill, minmax(280px, 1fr));
+  --grid-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 通常4列くらい */
+  --drawer-width: 0;
 }
 
-/* .sidebar-open クラスで変数を上書き */
-.sidebar-open {
-  --sidebar-width: 240px !important;
-  --grid-columns: repeat(auto-fill, minmax(320px, 1fr)); /* 広めにして3列っぽく */
+body.menu-open {
+  --grid-columns: repeat(auto-fill, minmax(240px, 1fr)); /* 開いたら3列くらいに狭く */
+  --drawer-width: 280px;
 }
 
-/* サイドバー本体（width を変数で制御） */
-.sidebar {
+/* ハンバーガーボタン */
+.menu-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.menu-btn:hover {
+  background: #f0f0f0;
+}
+
+/* サイドドロワー */
+.side-drawer {
   position: fixed;
-  top: 64px;
+  top: 0;
   left: 0;
-  bottom: 0;
-  width: var(--sidebar-width);
-  background: #fff;
-  border-right: 1px solid #ddd;
-  transition: width 0.3s ease;
-  overflow: hidden;           /* ← 重要！閉じている時は隠す */
-  z-index: 30;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  width: var(--drawer-width);
+  height: 100%;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+  transform: translateX(calc(-1 * var(--drawer-width)));
+  transition: transform 0.3s ease;
+  overflow-y: auto;
 }
 
-/* コンテンツのマージン（サイドバーが開いたら右にずらす） */
-.content {
-  margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s ease;
+body.menu-open .side-drawer {
+  transform: translateX(0);
 }
 
-/* 動画グリッドも変数で制御 */
+.drawer-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.drawer-nav {
+  padding: 8px 0;
+}
+
+.drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  color: #111;
+  text-decoration: none;
+  font-size: 15px;
+}
+.drawer-item svg {
+  fill: #606060;
+  flex-shrink: 0;
+}
+.drawer-item:hover,
+.drawer-item.active {
+  background: #f2f2f2;
+}
+.drawer-item.active {
+  color: #065fd4;
+}
+.drawer-item.active svg {
+  fill: #065fd4;
+}
+
+/* オーバーレイ */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 999;
+}
+
+body.menu-open .drawer-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 動画グリッドの列数制御 */
 .video-grid {
-  grid-template-columns: var(--grid-columns) !important;
-  transition: grid-template-columns 0.3s ease;
+  grid-template-columns: var(--grid-columns);
 }
 
+/* レスポンシブ調整（狭い画面では元々狭くなるので影響小） */
+@media (max-width: 900px) {
+  body.menu-open {
+    --grid-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+ 
 </style>
 </head>
 <body>
 
+<!-- ヘッダー部分を置き換え -->
 <header>
   <div class="menu-btn" id="menuToggle" title="メニュー">
-    <!-- YouTube標準ハンバーガー（横3本線） -->
-    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#111">
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
       <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
     </svg>
   </div>
@@ -137,49 +204,56 @@
   </div>
 </header>
 
-<!-- サイドバー（固定） -->
-<div class="sidebar" id="sidebar">
-  <ul>
-    <li data-action="home">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<!-- サイドメニュー（ドロワー） -->
+<div class="side-drawer" id="sideDrawer">
+  <div class="drawer-header">
+    <h2>K-tube</h2>
+  </div>
+  <nav class="drawer-nav">
+    <a href="#" class="drawer-item active">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
         <path d="m11.485 2.143-8 4.8-2 1.2a1 1 0 001.03 1.714L3 9.567V20a2 2 0 002 2h6v-7h2v7h6a2 2 0 002-2V9.567l.485.29a1 1 0 001.03-1.714l-2-1.2-8-4.8a1 1 0 00-1.03 0ZM5 8.366l7-4.2 7 4.2V20h-4v-5.5a1.5 1.5 0 00-1.5-1.5h-3A1.5 1.5 0 009 14.5V20H5V8.366Z"></path>
       </svg>
-      ホーム
-    </li>
+      <span>ホーム</span>
+    </a>
 
-    <li data-action="tools">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <a href="#" class="drawer-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
         <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"></path>
       </svg>
-      ツール
-    </li>
+      <span>ツール</span>
+    </a>
 
-    <li data-action="games">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M13 19c-1.1 0-2 .9-2 2v1h4v-1c0-1.1-.9-2-2-2zM7 2C4.8 2 3 3.8 3 6v12c0 2.2 1.8 4 4 4h10c2.2 0 4-1.8 4-4V6c0-2.2-1.8-4-4-4H7zm5 14c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zm6-8h-2v2h-2v-2h-2V8h2V6h2v2h2v2z"></path>
+    <a href="#" class="drawer-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+        <path d="M13 19c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM7 19c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM16.12 4.37l-4.8 2.22c-.45.21-.73.67-.73 1.18v5.35c0 .51.28.97.73 1.18l4.8 2.22c.68.31 1.5-.22 1.5-.96V5.33c0-.74-.82-1.27-1.5-.96zM5.88 4.37c-.68-.31-1.5.22-1.5.96v13.34c0 .74.82 1.27 1.5.96l4.8-2.22c.45-.21.73-.67.73-1.18V7.77c0-.51-.28-.97-.73-1.18L5.88 4.37z"></path>
       </svg>
-      ゲーム
-    </li>
+      <span>ゲーム</span>
+    </a>
 
-    <li data-action="history">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <a href="#" class="drawer-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
         <path d="M8.76 1.487a11 11 0 11-7.54 12.706 1 1 0 011.96-.4 9 9 0 0014.254 5.38A9 9 0 0016.79 4.38 9 9 0 004.518 7H7a1 1 0 010 2H1V3a1 1 0 012 0v2.678a11 11 0 015.76-4.192ZM12 6a1 1 0 00-1 1v5.58l.504.288 3.5 2a1 1 0 10.992-1.736L13 11.42V7a1 1 0 00-1-1Z"></path>
       </svg>
-      履歴
-    </li>
+      <span>履歴</span>
+    </a>
 
-    <li data-action="settings">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <a href="#" class="drawer-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
         <path d="M12.844 1h-1.687a2 2 0 00-1.962 1.616 3 3 0 01-3.92 2.263 2 2 0 00-2.38.891l-.842 1.46a2 2 0 00.417 2.507 3 3 0 010 4.525 2 2 0 00-.417 2.507l.843 1.46a2 2 0 002.38.892 3.001 3.001 0 013.918 2.263A2 2 0 0011.157 23h1.686a2 2 0 001.963-1.615 3.002 3.002 0 013.92-2.263 2 2 0 002.38-.892l.842-1.46a2 2 0 00-.418-2.507 3 3 0 010-4.526 2 2 0 00.418-2.508l-.843-1.46a2 2 0 00-2.38-.891 3 3 0 01-3.919-2.263A2 2 0 0012.844 1Zm-1.767 2.347a6 6 0 00.08-.347h1.687a4.98 4.98 0 002.407 3.37 4.98 4.98 0 004.122.4l.843 1.46A4.98 4.98 0 0018.5 12a4.98 4.98 0 001.716 3.77l-.843 1.46a4.98 4.98 0 00-4.123.4A4.979 4.979 0 0012.843 21h-1.686a4.98 4.98 0 00-2.408-3.371 4.999 4.999 0 00-4.12-.399l-.844-1.46A4.979 4.979 0 005.5 12a4.98 4.98 0 00-1.715-3.77l.842-1.459a4.98 4.98 0 004.123-.399 4.981 4.981 0 002.327-3.025ZM16 12a4 4 0 11-7.999 0 4 4 0 018 0Zm-4 2a2 2 0 100-4 2 2 0 000 4Z"></path>
       </svg>
-      設定
-    </li>
-  </ul>
+      <span>設定</span>
+    </a>
+  </nav>
 </div>
+
+<!-- オーバーレイ（メニュー外クリックで閉じる用） -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<main>
+  <div class="content" id="app"></div>
+</main>
  
-    <main>
-      <div class="content" id="app"></div>
-    </main>
     <script>
       /* YouTube風シングルファイルデモ（Piped API + yt-dlp再生URL版） */
       const PIPED_API_BASE = '/piped';
@@ -903,56 +977,24 @@ window.addEventListener('load', () => {
     });
 });
 
-// メニュー開閉（最下部の <script> 内に置く）
+ // メニュー開閉
 const menuToggle = document.getElementById('menuToggle');
-const sidebar = document.getElementById('sidebar');
-let isSidebarOpen = false;
+const sideDrawer = document.getElementById('sideDrawer');
+const overlay = document.getElementById('drawerOverlay');
+const body = document.body;
 
-function toggleSidebar() {
-  isSidebarOpen = !isSidebarOpen;
-  
-  // クラスでCSS変数を制御（これが一番確実）
-  document.body.classList.toggle('sidebar-open', isSidebarOpen);
-  
-  // 保険で直接 width もセット（モバイル対応用）
-  sidebar.style.width = isSidebarOpen ? '240px' : '0px';
+function toggleMenu() {
+  body.classList.toggle('menu-open');
 }
 
-if (menuToggle && sidebar) {
-  menuToggle.addEventListener('click', (e) => {
-    e.stopPropagation(); // 親への伝播を止める
-    toggleSidebar();
-  });
+menuToggle.addEventListener('click', toggleMenu);
+overlay.addEventListener('click', toggleMenu);
 
-  // サイドバー外をクリックしたら閉じる
-  document.addEventListener('click', (e) => {
-    if (isSidebarOpen &&
-        !sidebar.contains(e.target) &&
-        !menuToggle.contains(e.target)) {
-      toggleSidebar();
-    }
-  });
-
-  // ESCキーでも閉じる（便利）
-  document.addEventListener('keydown', (e) => {
-    if (isSidebarOpen && e.key === 'Escape') {
-      toggleSidebar();
-    }
-  });
-}
-
-// サイドバーの各項目クリック（ホームだけ戻る）
-sidebar.querySelectorAll('li').forEach(li => {
-  li.addEventListener('click', () => {
-    if (li.dataset.action === 'home') {
-      location.hash = '';
-    }
-    // 他のメニューは後で拡張
-    toggleSidebar(); // クリックしたら閉じる
-  });
-});
+// 今のところホームだけアクティブに（あとでルーティング対応可能）
+document.querySelector('.drawer-item').classList.add('active');
      
+    </script>
 
- </script>
+
 </body>
 </html>
