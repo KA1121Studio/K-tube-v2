@@ -902,34 +902,6 @@ window.addEventListener('load', () => {
       console.error('自動 +1 に失敗:', err);
     });
 });
-     
-    </script>
-
-    <!-- パスワード画面部分（変更なし） -->
-    <script>
-      const correctPassword = "manabinotobira";
-      const input = document.getElementById('passwordInput');
-      const btn = document.getElementById('passwordBtn');
-      const msg = document.getElementById('passwordMsg');
-      const screen = document.getElementById('passwordScreen');
-      const content = document.getElementById('mainContent');
-      btn.addEventListener('click', () => {
-        if(input.value === correctPassword){
-          screen.style.display = 'none';
-          content.style.display = 'block';
-        } else {
-          msg.textContent = '利用コードが違います';
-          input.value = '';
-          input.focus();
-        }
-      });
-      input.addEventListener('keydown', e => {
-        if(e.key === 'Enter') btn.click();
-      });
-      window.addEventListener('load', () => {
-        fetch('https://teaching-materials-r4zf.onrender.com/', { mode: 'no-cors' }).catch(()=>{});
-        fetch('https://teaching-materials-r4zf.onrender.com/watch.html?id=dummy', { mode: 'no-cors' }).catch(()=>{});
-      });
 
 // メニュー開閉（最下部の <script> 内に置く）
 const menuToggle = document.getElementById('menuToggle');
@@ -980,6 +952,7 @@ sidebar.querySelectorAll('li').forEach(li => {
   });
 });
      
-    </script>
+
+ </script>
 </body>
 </html>
