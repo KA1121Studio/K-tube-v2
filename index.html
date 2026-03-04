@@ -69,109 +69,43 @@
 }
 
  /* 新規追加：サイドバーとトグル制御用変数 */
+/* 既存の :root はこのように修正 */
 :root {
   --sidebar-width: 0px;
-  --grid-columns: repeat(auto-fill, minmax(280px, 1fr)); /* デフォルト4列くらい */
-  --sidebar-open: false;
+  --grid-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
+/* .sidebar-open クラスで変数を上書き */
 .sidebar-open {
-  --sidebar-width: 240px;
-  --grid-columns: repeat(auto-fill, minmax(320px, 1fr)); /* 開いたら少し広めに → 結果的に3列っぽくなる */
+  --sidebar-width: 240px !important;
+  --grid-columns: repeat(auto-fill, minmax(320px, 1fr)); /* 広めにして3列っぽく */
 }
 
-/* ヘッダー調整：ロゴの前にメニューアイコン追加 */
-header {
-  padding: 8px 16px;
-  gap: 0; /* 調整 */
-}
-
-/* メニューアイコン（ハンバーガー） */
-.menu-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
-.menu-btn:hover {
-  background: #eee;
-}
-.menu-btn svg {
-  width: 24px;
-  height: 24px;
-  fill: #111;
-}
-
-/* サイドバー本体 */
+/* サイドバー本体（width を変数で制御） */
 .sidebar {
   position: fixed;
-  top: 64px; /* ヘッダー高さ分 */
+  top: 64px;
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
   background: #fff;
   border-right: 1px solid #ddd;
   transition: width 0.3s ease;
-  overflow-y: auto;
+  overflow: hidden;           /* ← 重要！閉じている時は隠す */
   z-index: 30;
   box-shadow: 2px 0 8px rgba(0,0,0,0.1);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 8px 0;
-  margin: 0;
-}
-
-.sidebar li {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 12px 24px;
-  cursor: pointer;
-  color: #111;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.sidebar li:hover {
-  background: #f2f2f2;
-}
-
-.sidebar svg {
-  width: 24px;
-  height: 24px;
-  fill: #606060;
-}
-
-/* メインコンテンツを右にずらす（サイドバー開いた時） */
-main .content {
+/* コンテンツのマージン（サイドバーが開いたら右にずらす） */
+.content {
   margin-left: var(--sidebar-width);
   transition: margin-left 0.3s ease;
 }
 
-/* 動画グリッドの列をCSS変数で制御 */
+/* 動画グリッドも変数で制御 */
 .video-grid {
-  grid-template-columns: var(--grid-columns);
-  transition: all 0.3s ease;
-}
-
-/* モバイル対応（900px以下）ではサイドバーをオーバーレイ風に */
-@media (max-width: 900px) {
-  .sidebar {
-    width: 0;
-    overflow: hidden;
-  }
-  .sidebar-open .sidebar {
-    width: 240px;
-  }
-  main .content {
-    margin-left: 0;
-  }
+  grid-template-columns: var(--grid-columns) !important;
+  transition: grid-template-columns 0.3s ease;
 }
 
 </style>
@@ -997,41 +931,55 @@ window.addEventListener('load', () => {
         fetch('https://teaching-materials-r4zf.onrender.com/watch.html?id=dummy', { mode: 'no-cors' }).catch(()=>{});
       });
 
-     // メニュー開閉
+// メニュー開閉（最下部の <script> 内に置く）
 const menuToggle = document.getElementById('menuToggle');
 const sidebar = document.getElementById('sidebar');
-const appContent = document.querySelector('.content') || document.body; // クリック検知用
-
 let isSidebarOpen = false;
 
 function toggleSidebar() {
   isSidebarOpen = !isSidebarOpen;
+  
+  // クラスでCSS変数を制御（これが一番確実）
   document.body.classList.toggle('sidebar-open', isSidebarOpen);
-  sidebar.style.width = isSidebarOpen ? '240px' : '0';
+  
+  // 保険で直接 width もセット（モバイル対応用）
+  sidebar.style.width = isSidebarOpen ? '240px' : '0px';
 }
 
-menuToggle.addEventListener('click', toggleSidebar);
-
-// サイドバー外をクリックしたら閉じる
-document.addEventListener('click', (e) => {
-  if (isSidebarOpen && 
-      !sidebar.contains(e.target) && 
-      !menuToggle.contains(e.target)) {
+if (menuToggle && sidebar) {
+  menuToggle.addEventListener('click', (e) => {
+    e.stopPropagation(); // 親への伝播を止める
     toggleSidebar();
-  }
-});
+  });
 
-// 今はクリックしても何もしない（後でページ遷移などに使う用）
+  // サイドバー外をクリックしたら閉じる
+  document.addEventListener('click', (e) => {
+    if (isSidebarOpen &&
+        !sidebar.contains(e.target) &&
+        !menuToggle.contains(e.target)) {
+      toggleSidebar();
+    }
+  });
+
+  // ESCキーでも閉じる（便利）
+  document.addEventListener('keydown', (e) => {
+    if (isSidebarOpen && e.key === 'Escape') {
+      toggleSidebar();
+    }
+  });
+}
+
+// サイドバーの各項目クリック（ホームだけ戻る）
 sidebar.querySelectorAll('li').forEach(li => {
   li.addEventListener('click', () => {
-    // 例: ホームだけ今は有効
     if (li.dataset.action === 'home') {
       location.hash = '';
-      toggleSidebar(); // 閉じる
     }
-    // 他の項目は後で実装
+    // 他のメニューは後で拡張
+    toggleSidebar(); // クリックしたら閉じる
   });
 });
+     
     </script>
 </body>
 </html>
