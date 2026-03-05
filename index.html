@@ -860,7 +860,30 @@ async function renderWatch(videoId) {
           } catch (searchErr) {
             console.warn('メタデータ取得失敗（Piped検索）:', searchErr);
           }
-
+// 視聴履歴を保存（再生開始時に）
+function saveToHistory(videoId, title, thumbnail, uploaderName, views) {
+  let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  
+  // 同じ動画があれば削除（重複回避）
+  history = history.filter(item => item.id !== videoId);
+  
+  // 新しいエントリを先頭に追加
+  history.unshift({
+    id: videoId,
+    title: title || '不明な動画',
+    thumbnail: thumbnail || '',
+    uploader: uploaderName || '不明',
+    views: views || 0,
+    watchedAt: Date.now()  // タイムスタンプでソート用
+  });
+  
+  // 最大100件まで保持（古いものを自動削除）
+  if (history.length > 100) {
+    history = history.slice(0, 100);
+  }
+  
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
 
 // 説明文だけ streams → 失敗したら yt-dlp にフォールバック（最強構成）
 let streamsDesc = '';
@@ -915,6 +938,16 @@ if (!streamsDesc) {
           const chThumb     = metaData.uploaderAvatar || metaData.thumbnail || '';
           const chSubs      = metaData.uploaderSubscriberCount || 0;
 
+// renderWatch内でメタデータ取得後に呼び出し
+// （metaDataが取れた後、app.innerHTML = ... の前あたりに）
+saveToHistory(
+  videoId,
+  metaData.title,
+  metaData.thumbnail,
+  metaData.uploaderName,
+  metaData.views
+);
+         
           app.innerHTML = `
             <div class="watch-container">
               <div class="main-col">
@@ -1199,6 +1232,9 @@ function updateSidebarActive() {
         item.classList.add('active');
       } else if (item.dataset.target === 'tools' && hash.startsWith('tools')) {
         item.classList.add('active');
+       } else if (item.dataset.target === 'history' && hash === 'history') {
+  item.classList.add('active');
+}
       }
     }
   });
@@ -1251,6 +1287,10 @@ function renderByHash() {
       performSearch(decodeURIComponent(v || ''));
     } else {
       renderHome();
+
+     } else if (k === 'history') {
+  renderHistory();
+}
     }
   }
 }
@@ -1270,6 +1310,11 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
       location.hash = 'games';          // ← 新しく追加
       renderGames();                    // ← 新しい関数呼び出し
     }
+
+   } else if (target === 'history') {
+  location.hash = 'history';
+  renderHistory();
+}
     // 他のメニュー（ツール・履歴・設定）は後で追加
   });
 });
@@ -1515,6 +1560,63 @@ function renderByHash() {
   }
 
   updateSidebarActive();
+}
+
+     // 新しい関数：履歴画面を表示
+function renderHistory() {
+  app.innerHTML = `
+    <section id="historySection">
+      <div style="margin:16px 0 8px; font-weight:700; font-size:20px; color:#0f0f0f;">
+        視聴履歴
+      </div>
+      <div class="video-grid" id="historyGrid"></div>
+      <div id="historySentinel" style="height:32px"></div>
+    </section>
+  `;
+
+  loadHistory();
+}
+
+// 履歴データを読み込んでカード表示
+function loadHistory() {
+  const grid = document.getElementById('historyGrid');
+  if (!grid) return;
+
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+
+  if (history.length === 0) {
+    grid.innerHTML = `
+      <div style="padding:40px; text-align:center; color:#606060;">
+        まだ視聴履歴がありません
+      </div>
+    `;
+    return;
+  }
+
+  history.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="thumb" data-vid="${item.id}">
+        <img src="${item.thumbnail}" alt="${escapeHtml(item.title)}" style="aspect-ratio:16/9; object-fit:cover;">
+      </div>
+      <div class="meta">
+        <div class="info">
+          <div class="title">${escapeHtml(item.title)}</div>
+          <div class="sub">
+            ${escapeHtml(item.uploader)} ・ ${fmtNum(item.views)} 回視聴 ・ 
+            ${timeAgo(new Date(item.watchedAt))}
+          </div>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('.thumb').addEventListener('click', () => {
+      location.hash = `watch=${item.id}`;
+    });
+
+    grid.appendChild(card);
+  });
 }
      
     </script>
