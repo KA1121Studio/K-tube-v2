@@ -1214,7 +1214,6 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
   item.addEventListener('click', () => {
     const target = item.dataset.target;
 
-    // アクティブクラスを一旦全部外す
     document.querySelectorAll('.sidebar-item, .menu-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
 
@@ -1231,7 +1230,6 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
       renderHistory();
     }
 
-    // モバイルスライドメニューが開いていたら閉じる
     if (sidebar.classList.contains('open')) {
       toggleMenu();
     }
@@ -1592,12 +1590,14 @@ function renderByHash() {
       performSearch(decodeURIComponent(v || ''));
     } else if (k === 'games') {
       renderGames();
+    } else if (k === 'tools') {
+      renderTools();
+    } else if (k === 'history') {
+      renderHistory();
     } else if (k === 'playgame') {
       const url = decodeURIComponent(v || '');
       const fakeGame = { title: "ゲームプレイ中", embedUrl: url, description: "埋め込みゲーム" };
       renderGamePlay(fakeGame);
-    } else if (k === 'tools') {
-      renderTools();               // ← 追加
     } else if (k === 'playtool') {
       const url = decodeURIComponent(v || '');
       const fakeTool = { title: "ツール実行中", embedUrl: url, description: "埋め込みツール" };
