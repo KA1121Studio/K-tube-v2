@@ -1177,26 +1177,7 @@ function toggleMenu() {
 menuBtn.addEventListener('click', toggleMenu);
 overlay.addEventListener('click', toggleMenu);
 
-// 今はテキトーに「ホームに戻る」だけ実装（後で拡張）
-document.querySelectorAll('.menu-item').forEach(item => {
-  item.addEventListener('click', () => {
-    // 例: ホームだけ実装
-    if (item.dataset.target === 'home') {
-      location.hash = '';
-    } else if (target === 'games') {
-      location.hash = 'games';
-      renderGames();
-    } else if (target === 'tools') {
-      location.hash = 'tools';
-      renderTools();
-    } else if (target === 'history') {          // ← ここを追加
-      location.hash = 'history';
-      renderHistory();
-    }
-    // 他の項目は後で
-    toggleMenu(); // クリックしたら閉じる
-  });
-});
+
 
      // 現在のパス（ハッシュ）でアクティブ項目をハイライト
 function updateSidebarActive() {
@@ -1206,16 +1187,21 @@ function updateSidebarActive() {
   items.forEach(item => {
     item.classList.remove('active');
 
-    if (
-      (hash === '' && item.dataset.target === 'home') ||
-      hash.startsWith('watch=') ||
-      hash.startsWith('channel=') ||
-      (hash === 'games' && item.dataset.target === 'games') ||
-      (hash === 'tools' && item.dataset.target === 'tools') ||
-      (hash === 'history' && item.dataset.target === 'history')   // ← ここを正しく条件に追加
-    ) {
+    const target = item.dataset.target;
+
+    if (!hash) {  // 空 → ホーム
+      if (target === 'home') item.classList.add('active');
+    }
+    else if (hash === 'games' && target === 'games') {
       item.classList.add('active');
     }
+    else if (hash === 'tools' && target === 'tools') {
+      item.classList.add('active');
+    }
+    else if (hash === 'history' && target === 'history') {
+      item.classList.add('active');
+    }
+    // watch, channel, search などはアクティブにしない（または別途ルール）
   });
 }
 
@@ -1228,7 +1214,7 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
   item.addEventListener('click', () => {
     const target = item.dataset.target;
 
-    // アクティブクラス更新
+    // アクティブクラスを一旦全部外す
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
 
@@ -1238,14 +1224,17 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
       location.hash = 'games';
       renderGames();
     } else if (target === 'tools') {
-      location.hash = 'tools';          // ← 新しく追加
-      renderTools();                    // ← 新しい関数呼び出し
-    } else if (target === 'history') {          // ← ここを追加
+      location.hash = 'tools';
+      renderTools();
+    } else if (target === 'history') {
       location.hash = 'history';
       renderHistory();
     }
-   
-    // 他のメニュー（履歴・設定）は後で
+
+    // モバイル時のスライドメニューが開いていたら閉じる（任意）
+    if (sidebar.classList.contains('open')) {
+      toggleMenu();
+    }
   });
 });
 
@@ -1325,27 +1314,56 @@ async function loadGames() {
   if (!grid) return;
 
   // 仮のゲームデータ（後で本物に置き換え）
-  const fakeGames = [
-    {
-      title: "2048",
-      thumbnail: "https://img.itch.zone/aW1nLzE1NzM5NzQ5LnBuZw==/original/%2B%2B%2B%2B8.png",
-      embedUrl: "https://playcanv.as/p/2OlkU6tU/",  // 無料の2048ゲーム例
-      description: "数字を合わせて2048を目指そう！"
-    },
-    {
-      title: "Flappy Bird Clone",
-      thumbnail: "https://img.itch.zone/aW1nLzE1NzM5NzQ5LnBuZw==/original/%2B%2B%2B%2B8.png", // 仮サムネ
-      embedUrl: "https://www.crazygames.com/embed/flappy-bird-clone",
-      description: "パイプを避けて飛ぼう"
-    },
-    {
-      title: "Snake Game",
-      thumbnail: "https://img.itch.zone/aW1nLzE1NzM5NzQ5LnBuZw==/original/%2B%2B%2B%2B8.png",
-      embedUrl: "https://plays.org/snake/",
-      description: "クラシックなスネークゲーム"
-    },
-    // ここにどんどん追加可能
-  ];
+const fakeGames = [
+  {
+    title: "Vex 6",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.UlEcj9adOo7tMdyr9kDoUwHaFj%3Fpid%3DApi&sp=1772665764T270180d2aa408e18c040056d64a53c4af5f7409d1ab5463ae8c928ff1a915354",
+    embedUrl: "https://vex6-1.onrender.com/",
+    description: "棒人間のアスレチックゲーム"
+  },
+  {
+    title: "Minecraft",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.15tC-Uj3QYM1fQ4HJrsygQHaEi%3Fpid%3DApi&sp=1772665888T50dd57cb40ffe4621cff68271e424f1e611fab53c8f0844ff81f63e8c3398ca9",
+    embedUrl: "https://eaglercraft-java-1-20-1-jw-1.onrender.com/",
+    description: "ブロックで、自分の世界を広げよう"
+  },
+  {
+    title: "2048",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fi.ytimg.com%2Fvi%2F4NFZwPhqeRs%2Fmaxresdefault.jpg&sp=1772665942Tcfaf9257830bfc247cf2d9a4c97e813fcaa88f66bb628ce4e2246d6a6f0cb933",
+    embedUrl: "https://rgukt-sklm-abccf.firebaseapp.com/taxa/games/2048-master/index.html",
+    description: "数字を合体させるゲーム"
+  },
+  {
+    title: "Snowball.io",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fstatic.gogy.com%2Fogimages%2Fsnowballio.jpg&sp=1772665985Te5eb13853d857939b523095a13fa281fd02b61db2c3bd809d01808bb83c24843",
+    embedUrl: "https://snowball-io.netlify.app/",
+    description: "巨大な雪玉を作って相手を落とそう！"
+  },
+  {
+    title: "Slope Rider 3D",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.oV4a8PXe9GtvtnWzl0YgfwHaD4%3Fpid%3DApi&sp=1772666571Te73fdc99867d6f5f9237ac495c5fd243c3d432fd303a2bc91a751af9ee5b6f8d",
+    embedUrl: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-snorepifep.mre%2Fqlmpg-pifep-1d",
+    description: "スキーで障害物を避けながら進むゲーム"
+  },
+  {
+    title: "GTA",
+    thumbnail: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-dcsjmgtpy%2Ccmm-cccje-dctc%2Fkmcgg%2Feaoe-gva%2Fgpald%2Fvggcs%2Fcpioe-gva%2Fgpald%2Fvggcs%2Fcpioe%2F3%2Fm744x105.ue%60p",
+    embedUrl: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-dcsjmgtpy%2Ccmm-gva%2Fgpald%2Fvggcs%2Fcpioe",
+    description: "街で自由に暴れれるゲーム"
+  },
+  {
+    title: "ギョ〜転！ガッポリすし",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.Lx2fn1t9M9XkGgn9R4e1CwHaDS%3Fpid%3DApi&sp=1772667781Tda0b85f3d5c297f80527dcd6715834b4759798197f715c95aeb0a387b3d9588a",
+    embedUrl: "https://melodic-crisp-d02b45.netlify.app/",
+    description: "寿司にコインを賭けてふやすゲーム"
+  },
+  {
+    title: "Deer Adventure",
+    thumbnail: "https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Ftse1.mm.bing.net%2Fth%2Fid%2FOIP.9kjMAAt-LdCwuhONSzrjiwHaEK%3Fpid%3DApi&sp=1772668380Tb074970cda651cf97ed1afd35e83e9ff921602e083da54356942fe21d30277f5",
+    embedUrl: "https://moonlight.sparks.ddns-ip.net/math/hvtrs8%2F-dcsjmgtpy%2Ccmm-dgep-cdteltwrg",
+    description: "鹿になって街を暴れるゲーム"
+  }
+];
 
   fakeGames.forEach(game => {
     const card = document.createElement('div');
