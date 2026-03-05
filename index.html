@@ -430,9 +430,7 @@ body.watch-page main.content-main {
   <!-- 既存のオーバーレイやスライドメニューはそのまま残す（モバイル用） -->
   <div class="overlay" id="overlay"></div>
  
-    <main>
-      <div class="content" id="app"></div>
-    </main>
+
     <script>
       /* YouTube風シングルファイルデモ（Piped API + yt-dlp再生URL版） */
       const PIPED_API_BASE = '/piped';
@@ -1207,22 +1205,17 @@ function updateSidebarActive() {
 
   items.forEach(item => {
     item.classList.remove('active');
-    if ((hash === '' && item.dataset.target === 'home') ||
-        hash.startsWith('watch=') ||
-        hash.startsWith('channel=') ||
-        hash.startsWith('games') ||
-        hash.startsWith('tools')) {  // ← toolsも追加
-      if (item.dataset.target === 'home' && !hash.startsWith('games') && !hash.startsWith('tools')) {
-        item.classList.add('active');
-      } else if (item.dataset.target === 'games' && hash.startsWith('games')) {
-        item.classList.add('active');
-      } else if (item.dataset.target === 'tools' && hash.startsWith('tools')) {
-        item.classList.add('active');
-      }
-(hash === 'history' && item.dataset.target === 'history')) {      // ← 追加
+
+    if (
+      (hash === '' && item.dataset.target === 'home') ||
+      hash.startsWith('watch=') ||
+      hash.startsWith('channel=') ||
+      (hash === 'games' && item.dataset.target === 'games') ||
+      (hash === 'tools' && item.dataset.target === 'tools') ||
+      (hash === 'history' && item.dataset.target === 'history')   // ← ここを正しく条件に追加
+    ) {
       item.classList.add('active');
     }
-   　　 }
   });
 }
 
