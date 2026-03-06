@@ -985,29 +985,29 @@ if (!streamsDesc) {
             );
         }
 
-         const defaultPlayer = localStorage.getItem('defaultPlayer') || 'official';
-         
-          app.innerHTML = `
-            <div class="watch-container">
-              <div class="main-col">
-                <div class="player-box">
-                  <iframe id="videoIframe" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;"></iframe>
-                </div>
-                <div class="player-meta">
-                  <h1>${escapeHtml(title)}</h1>
-                  <div class="stats">
-                    <div>${fmtNum(views)} 回視聴</div>
-                    <div>・</div>
-                    <div>${timeAgo(uploaded)}</div>
-                    <div style="margin-left:auto;font-weight:700">
-                      ${fmtNum(likes)} 👍
-                    </div>
-  　　　　　　　　<select id="playerSelect" style="margin-left:8px">
-               <option value="official" ${defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
-               <option value="original" ${defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
-               <option value="original360" ${defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２</option>
-                   </select>
-                  </div>
+const defaultPlayer = localStorage.getItem('defaultPlayer') || 'official';
+
+app.innerHTML = `
+  <div class="watch-container">
+    <div class="main-col">
+      <div class="player-box">
+        <iframe id="videoIframe" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;"></iframe>
+      </div>
+      <div class="player-meta">
+        <h1>${escapeHtml(title)}</h1>
+        <div class="stats">
+          <div>${fmtNum(views)} 回視聴</div>
+          <div>・</div>
+          <div>${timeAgo(uploaded)}</div>
+          <div style="margin-left:auto;font-weight:700">
+            ${fmtNum(likes)} 👍
+          </div>
+          <select id="playerSelect" style="margin-left:8px">
+            <option value="official" ${defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
+            <option value="original" ${defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
+            <option value="original360" ${defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２</option>
+          </select>
+        </div>
                   <div class="channel-row">
                     <img src="${chThumb}" alt="">
                     <div class="ch-info">
@@ -1040,34 +1040,22 @@ if (!streamsDesc) {
             </div>
           `;
 
-// app.innerHTML の後（playerSelectを取得できる場所）に追加
-// renderWatch() 内の try ブロック内（app.innerHTML の直後あたりに置く）
 
-// デフォルトプレイヤーを読み込む
-const defaultPlayer = localStorage.getItem('defaultPlayer') || 'official';
-
-// app.innerHTML = ` ... ` の中の <select> を以下に
-<select id="playerSelect" style="margin-left:8px">
-  <option value="official" ${defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
-  <option value="original" ${defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
-  <option value="original360" ${defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２</option>
-</select>
-
-
+// ← ここから下は **1回だけ** 記述（重複削除）
 const playerSelect = document.getElementById('playerSelect');
 const iframe = document.getElementById('videoIframe');
 
 if (playerSelect && iframe) {
-  // 初期状態で設定値に基づいて iframe を切り替え（これが重要！）
+  // 初期状態で設定値に基づいて iframe を切り替え
   let initialSrc = `https://www.youtube.com/embed/${videoId}`;
   if (defaultPlayer === 'original') {
     initialSrc = `/watch.html?id=${videoId}`;
   } else if (defaultPlayer === 'original360') {
     initialSrc = `/watch.html?id=${videoId}&mode=360`;
   }
-  iframe.src = initialSrc;
+  iframe.src = initialSrc;  // ← これで最初から正しいプレイヤーになる
 
-  // ユーザーが後で select を変えた場合も対応
+  // ユーザーが select を変えたら即反映
   playerSelect.addEventListener('change', () => {
     let newSrc = `https://www.youtube.com/embed/${videoId}`;
     if (playerSelect.value === 'original') {
