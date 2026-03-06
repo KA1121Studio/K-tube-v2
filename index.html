@@ -332,6 +332,43 @@ body.dark-mode .watch-container {
   color: #e0e0e0;
 }
 /* 必要に応じて他の要素も追加 */
+
+ .setting-group {
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+.setting-group h2 {
+  font-size: 18px;
+  margin: 0 0 16px;
+  color: #0f0f0f;
+}
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.setting-label input {
+  width: 18px;
+  height: 18px;
+}
+.danger-btn {
+  padding: 10px 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 12px;
+}
+.danger-btn:hover {
+  background: #c82333;
+}
  
 </style>
 </head>
@@ -1704,72 +1741,206 @@ function clearHistory() {
  // ────────────────────────────────────────────────
 // 設定ページ
 // ────────────────────────────────────────────────
+
 function renderSettings() {
-  // 現在の設定を localStorage から読み込む（なければデフォルト）
-  const darkMode = localStorage.getItem('darkMode') === 'true';
-  const autoClearHistory = localStorage.getItem('autoClearHistory') !== 'false'; // デフォルトON
+  // localStorage から現在の設定を読み込む（なければデフォルト値）
+  const settings = {
+    darkMode: localStorage.getItem('darkMode') === 'true',
+    autoPlay: localStorage.getItem('autoPlay') !== 'false',              // デフォルトON
+    defaultRegion: localStorage.getItem('defaultRegion') || 'JP',
+    commentSort: localStorage.getItem('commentSort') || 'top',          // top / new
+    defaultQuality: localStorage.getItem('defaultQuality') || 'auto',
+    notifications: localStorage.getItem('notifications') === 'true',
+    playlistEnabled: localStorage.getItem('playlistEnabled') !== 'false', // デフォルトON
+    language: localStorage.getItem('language') || 'ja'                   // ja / en
+  };
 
   app.innerHTML = `
-    <section style="max-width:800px; margin:0 auto; padding:20px;">
-      <h1 style="font-size:24px; font-weight:700; margin-bottom:24px;">設定</h1>
+    <section style="max-width:800px; margin:0 auto; padding:24px 16px;">
+      <h1 style="font-size:28px; font-weight:700; margin:0 0 32px; color:#0f0f0f;">設定</h1>
 
-      <!-- テーマ切り替え -->
-      <div style="margin-bottom:32px; padding:16px; background:#f8f9fa; border-radius:12px;">
-        <h2 style="font-size:18px; margin-bottom:12px;">外観</h2>
-        <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-          <input type="checkbox" id="darkModeToggle" ${darkMode ? 'checked' : ''}>
+      <!-- 外観 -->
+      <div class="setting-group">
+        <h2>外観</h2>
+        <label class="setting-label">
+          <input type="checkbox" id="darkModeToggle" ${settings.darkMode ? 'checked' : ''}>
           ダークモードにする
         </label>
       </div>
 
-      <!-- 履歴設定 -->
-      <div style="margin-bottom:32px; padding:16px; background:#f8f9fa; border-radius:12px;">
-        <h2 style="font-size:18px; margin-bottom:12px;">再生履歴</h2>
-        <label style="display:flex; align-items:center; gap:12px; cursor:pointer; margin-bottom:16px;">
-          <input type="checkbox" id="autoClearHistory" ${autoClearHistory ? 'checked' : ''}>
-          30日以上前の履歴を自動削除する
+      <!-- 再生設定 -->
+      <div class="setting-group">
+        <h2>再生</h2>
+        <label class="setting-label">
+          <input type="checkbox" id="autoPlayToggle" ${settings.autoPlay ? 'checked' : ''}>
+          自動再生を有効にする
         </label>
-        <button id="clearAllHistoryBtn" style="padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer;">
+        <div style="margin:16px 0;">
+          <label>デフォルト画質（オリジナルプレイヤー時）</label>
+          <select id="defaultQualitySelect">
+            <option value="auto" ${settings.defaultQuality === 'auto' ? 'selected' : ''}>自動</option>
+            <option value="360" ${settings.defaultQuality === '360' ? 'selected' : ''}>360p</option>
+            <option value="720" ${settings.defaultQuality === '720' ? 'selected' : ''}>720p</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 検索・地域 -->
+      <div class="setting-group">
+        <h2>検索・地域</h2>
+        <label>デフォルト地域</label>
+        <select id="defaultRegionSelect">
+          <option value="JP" ${settings.defaultRegion === 'JP' ? 'selected' : ''}>日本</option>
+          <option value="Global" ${settings.defaultRegion === 'Global' ? 'selected' : ''}>全世界</option>
+          <option value="US" ${settings.defaultRegion === 'US' ? 'selected' : ''}>アメリカ</option>
+        </select>
+      </div>
+
+      <!-- コメント -->
+      <div class="setting-group">
+        <h2>コメント</h2>
+        <label>デフォルト表示順</label>
+        <select id="commentSortSelect">
+          <option value="top" ${settings.commentSort === 'top' ? 'selected' : ''}>トップコメント</option>
+          <option value="new" ${settings.commentSort === 'new' ? 'selected' : ''}>新着順</option>
+        </select>
+      </div>
+
+      <!-- 通知 -->
+      <div class="setting-group">
+        <h2>通知</h2>
+        <label class="setting-label">
+          <input type="checkbox" id="notificationsToggle" ${settings.notifications ? 'checked' : ''}>
+          新着動画の通知を受け取る（ブラウザ通知）
+        </label>
+        <p style="font-size:13px; color:#606060; margin-top:8px;">
+          ※初回ONにするとブラウザから許可を求められます
+        </p>
+      </div>
+
+      <!-- プレイリスト（お気に入り） -->
+      <div class="setting-group">
+        <h2>プレイリスト機能（準備中）</h2>
+        <label class="setting-label">
+          <input type="checkbox" id="playlistToggle" ${settings.playlistEnabled ? 'checked' : ''}>
+          お気に入り・プレイリスト機能を有効にする
+        </label>
+        <p style="font-size:13px; color:#606060; margin-top:8px;">
+          ※現在準備中です。将来的に動画をお気に入り登録できます
+        </p>
+      </div>
+
+      <!-- 履歴 -->
+      <div class="setting-group">
+        <h2>再生履歴</h2>
+        <label class="setting-label">
+          <input type="checkbox" id="autoClearHistory" ${settings.autoClearHistory ? 'checked' : ''}>
+          30日以上前の履歴を自動削除
+        </label>
+        <button id="clearAllHistoryBtn" class="danger-btn" style="margin-top:16px;">
           すべての履歴を今すぐ削除
         </button>
       </div>
 
-      <!-- バージョン情報 -->
-      <div style="text-align:center; color:#606060; margin-top:40px;">
-        <p>K-tube バージョン 1.32</p>
-        <p>© 2025-2026</p>
+      <!-- 言語 -->
+      <div class="setting-group">
+        <h2>言語</h2>
+        <select id="languageSelect">
+          <option value="ja" ${settings.language === 'ja' ? 'selected' : ''}>日本語</option>
+          <option value="en" ${settings.language === 'en' ? 'selected' : ''}>English</option>
+        </select>
+        <p style="font-size:13px; color:#606060; margin-top:8px;">
+          ※英語版は準備中です（UIはまだ日本語固定）
+        </p>
+      </div>
+
+      <!-- キャッシュクリア -->
+      <div class="setting-group" style="border-top:1px solid #eee; padding-top:24px;">
+        <h2>データリセット</h2>
+        <button id="clearCacheBtn" class="danger-btn">
+          すべての設定とデータをリセット（キャッシュクリア）
+        </button>
+        <p style="font-size:13px; color:#c00; margin-top:8px;">
+          ※この操作は元に戻せません。アプリが再読み込みされます。
+        </p>
+      </div>
+
+      <!-- バージョン -->
+      <div style="text-align:center; margin:48px 0; color:#606060; font-size:14px;">
+        K-tube バージョン 1.32
+        <br>© 2025-2026
       </div>
     </section>
   `;
 
-  // イベントリスナー設定
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  if (darkModeToggle) {
-    darkModeToggle.addEventListener('change', (e) => {
-      const enabled = e.target.checked;
-      localStorage.setItem('darkMode', enabled);
-      document.body.classList.toggle('dark-mode', enabled);
-      // 必要ならここでスタイルを即時反映（後述）
-    });
-  }
+  // イベントリスナー
+  document.getElementById('darkModeToggle')?.addEventListener('change', e => {
+    const enabled = e.target.checked;
+    localStorage.setItem('darkMode', enabled);
+    document.body.classList.toggle('dark-mode', enabled);
+  });
 
-  const autoClearToggle = document.getElementById('autoClearHistory');
-  if (autoClearToggle) {
-    autoClearToggle.addEventListener('change', (e) => {
-      localStorage.setItem('autoClearHistory', e.target.checked);
-    });
-  }
+  document.getElementById('autoPlayToggle')?.addEventListener('change', e => {
+    localStorage.setItem('autoPlay', e.target.checked);
+  });
 
-  const clearBtn = document.getElementById('clearAllHistoryBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      if (confirm('すべての再生履歴を本当に削除しますか？この操作は元に戻せません。')) {
-        clearHistory();
-        alert('履歴をすべて削除しました');
+  document.getElementById('defaultQualitySelect')?.addEventListener('change', e => {
+    localStorage.setItem('defaultQuality', e.target.value);
+  });
+
+  document.getElementById('defaultRegionSelect')?.addEventListener('change', e => {
+    localStorage.setItem('defaultRegion', e.target.value);
+  });
+
+  document.getElementById('commentSortSelect')?.addEventListener('change', e => {
+    localStorage.setItem('commentSort', e.target.value);
+  });
+
+  document.getElementById('notificationsToggle')?.addEventListener('change', async e => {
+    const enabled = e.target.checked;
+    if (enabled) {
+      // ブラウザ通知許可をリクエスト
+      if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          e.target.checked = false;
+          alert('通知が許可されませんでした');
+          return;
+        }
       }
-    });
-  }
-}    
+    }
+    localStorage.setItem('notifications', enabled);
+  });
+
+  document.getElementById('playlistToggle')?.addEventListener('change', e => {
+    localStorage.setItem('playlistEnabled', e.target.checked);
+  });
+
+  document.getElementById('autoClearHistory')?.addEventListener('change', e => {
+    localStorage.setItem('autoClearHistory', e.target.checked);
+  });
+
+  document.getElementById('languageSelect')?.addEventListener('change', e => {
+    localStorage.setItem('language', e.target.value);
+    alert('言語変更は次回リロード後に反映されます（現在準備中）');
+  });
+
+  // 履歴全削除
+  document.getElementById('clearAllHistoryBtn')?.addEventListener('click', () => {
+    if (confirm('すべての再生履歴を削除しますか？この操作は元に戻せません。')) {
+      clearHistory();
+      alert('履歴をすべて削除しました');
+    }
+  });
+
+  // キャッシュ全クリア
+  document.getElementById('clearCacheBtn')?.addEventListener('click', () => {
+    if (confirm('すべての設定・履歴・キャッシュを削除しますか？アプリが再読み込みされます。')) {
+      localStorage.clear();
+      location.reload();
+    }
+  });
+}   
      
     </script>
 
