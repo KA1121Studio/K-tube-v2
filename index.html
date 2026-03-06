@@ -1685,15 +1685,18 @@ function renderHistory() {
   }
 }    
 
-// renderByHash を拡張（既存の関数に追加）
+// renderByHash を拡張する
 function renderByHash() {
   const h = location.hash.slice(1);
+  
+  // まず watch-page クラスをリセット
   document.body.classList.remove('watch-page');
 
   if (!h) {
     renderHome();
   } else {
     const [k, v] = h.split('=');
+    
     if (k === 'watch') {
       renderWatch(v);
       document.body.classList.add('watch-page');
@@ -1710,6 +1713,10 @@ function renderByHash() {
       renderHistory();
     } else if (k === 'settings') {
       renderSettings();
+    } else if (k === 'about') {
+      renderAbout();
+    } else if (k === 'contact') {
+      renderContact();
     } else if (k === 'playgame') {
       const url = decodeURIComponent(v || '');
       const fakeGame = { title: "ゲームプレイ中", embedUrl: url, description: "埋め込みゲーム" };
@@ -1719,10 +1726,10 @@ function renderByHash() {
       const fakeTool = { title: "ツール実行中", embedUrl: url, description: "埋め込みツール" };
       renderToolPlay(fakeTool);
     } else {
-      renderHome();
+      renderHome();  // 未知のハッシュはホームに戻す
     }
   }
-
+  
   updateSidebarActive();
 }
 
