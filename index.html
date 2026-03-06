@@ -307,6 +307,31 @@ body.watch-page main.content-main {
     left: 0;                     /* モバイルでは左端まで */
   }
 }
+
+ body.dark-mode {
+  background: #0f0f0f;
+  color: #e0e0e0;
+}
+body.dark-mode header {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+body.dark-mode .sidebar,
+body.dark-mode .sidebar-fixed {
+  background: #1e1e1e;
+}
+body.dark-mode .menu-item:hover,
+body.dark-mode .sidebar-item:hover {
+  background: #333;
+}
+body.dark-mode .card {
+  background: #1e1e1e;
+}
+body.dark-mode .video-grid,
+body.dark-mode .watch-container {
+  color: #e0e0e0;
+}
+/* 必要に応じて他の要素も追加 */
  
 </style>
 </head>
@@ -1200,11 +1225,22 @@ function updateSidebarActive() {
     }
     else if (hash === 'history' && target === 'history') {
       item.classList.add('active');
+   } else if (hash === 'settings' && target === 'settings') {   // ← 追加
+      item.classList.add('active');
+     
     }
     // watch, channel, search などはアクティブにしない（または別途ルール）
   });
 }
 
+// ページ読み込み時に適用
+window.addEventListener('load', () => {
+  const darkMode = localStorage.getItem('darkMode') === 'true';
+  document.body.classList.toggle('dark-mode', darkMode);
+  
+  // 他の初期化処理...
+});
+     
 // ページ読み込み時 + hash変更時に更新
 window.addEventListener('hashchange', updateSidebarActive);
 window.addEventListener('load', updateSidebarActive);
@@ -1228,7 +1264,11 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
     } else if (target === 'history') {
       location.hash = 'history';
       renderHistory();
-    }
+    // .sidebar-item のクリックリスナー内（既存のものに追加）
+} else if (target === 'settings') {
+  location.hash = 'settings';
+  renderSettings();
+}
 
     if (sidebar.classList.contains('open')) {
       toggleMenu();
@@ -1264,6 +1304,9 @@ function renderByHash() {
     } else if (k === 'playgame') {
       // ……
     } else if (k === 'playtool') {
+
+    } else if (k === 'settings') {          // ← ここを追加
+      renderSettings(); 
       // ……
      
     } else {
@@ -1656,6 +1699,76 @@ function clearHistory() {
   localStorage.removeItem(HISTORY_KEY);
   renderHistory();  // 即時画面更新
 }
+
+ // ────────────────────────────────────────────────
+// 設定ページ
+// ────────────────────────────────────────────────
+function renderSettings() {
+  // 現在の設定を localStorage から読み込む（なければデフォルト）
+  const darkMode = localStorage.getItem('darkMode') === 'true';
+  const autoClearHistory = localStorage.getItem('autoClearHistory') !== 'false'; // デフォルトON
+
+  app.innerHTML = `
+    <section style="max-width:800px; margin:0 auto; padding:20px;">
+      <h1 style="font-size:24px; font-weight:700; margin-bottom:24px;">設定</h1>
+
+      <!-- テーマ切り替え -->
+      <div style="margin-bottom:32px; padding:16px; background:#f8f9fa; border-radius:12px;">
+        <h2 style="font-size:18px; margin-bottom:12px;">外観</h2>
+        <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+          <input type="checkbox" id="darkModeToggle" ${darkMode ? 'checked' : ''}>
+          ダークモードにする
+        </label>
+      </div>
+
+      <!-- 履歴設定 -->
+      <div style="margin-bottom:32px; padding:16px; background:#f8f9fa; border-radius:12px;">
+        <h2 style="font-size:18px; margin-bottom:12px;">再生履歴</h2>
+        <label style="display:flex; align-items:center; gap:12px; cursor:pointer; margin-bottom:16px;">
+          <input type="checkbox" id="autoClearHistory" ${autoClearHistory ? 'checked' : ''}>
+          30日以上前の履歴を自動削除する
+        </label>
+        <button id="clearAllHistoryBtn" style="padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer;">
+          すべての履歴を今すぐ削除
+        </button>
+      </div>
+
+      <!-- バージョン情報 -->
+      <div style="text-align:center; color:#606060; margin-top:40px;">
+        <p>K-tube バージョン 1.32</p>
+        <p>© 2025-2026</p>
+      </div>
+    </section>
+  `;
+
+  // イベントリスナー設定
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener('change', (e) => {
+      const enabled = e.target.checked;
+      localStorage.setItem('darkMode', enabled);
+      document.body.classList.toggle('dark-mode', enabled);
+      // 必要ならここでスタイルを即時反映（後述）
+    });
+  }
+
+  const autoClearToggle = document.getElementById('autoClearHistory');
+  if (autoClearToggle) {
+    autoClearToggle.addEventListener('change', (e) => {
+      localStorage.setItem('autoClearHistory', e.target.checked);
+    });
+  }
+
+  const clearBtn = document.getElementById('clearAllHistoryBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (confirm('すべての再生履歴を本当に削除しますか？この操作は元に戻せません。')) {
+        clearHistory();
+        alert('履歴をすべて削除しました');
+      }
+    });
+  }
+}    
      
     </script>
 
