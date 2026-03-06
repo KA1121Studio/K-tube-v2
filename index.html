@@ -983,8 +983,10 @@ if (!streamsDesc) {
               metaData.uploaderName || metaData.uploader || '不明',
               metaData.uploaderUrl || ''
             );
-          }
+        }
 
+         const defaultPlayer = localStorage.getItem('defaultPlayer') || 'official';
+         
           app.innerHTML = `
             <div class="watch-container">
               <div class="main-col">
@@ -1000,12 +1002,11 @@ if (!streamsDesc) {
                     <div style="margin-left:auto;font-weight:700">
                       ${fmtNum(likes)} 👍
                     </div>
-                    <select id="playerSelect" style="margin-left:8px">
-                      <option value="official" selected>公式プレイヤー</option>
-                       <option value="original">オリジナルプレイヤー</option>
-                       <option value="original360">オリジナルプレイヤー２</option>
-
-                    </select>
+  　　　　　　　　<select id="playerSelect" style="margin-left:8px">
+               <option value="official" ${defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
+               <option value="original" ${defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
+               <option value="original360" ${defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２</option>
+                   </select>
                   </div>
                   <div class="channel-row">
                     <img src="${chThumb}" alt="">
@@ -1039,6 +1040,32 @@ if (!streamsDesc) {
             </div>
           `;
 
+// app.innerHTML の後（playerSelectを取得できる場所）に追加
+const playerSelect = document.getElementById('playerSelect');
+const iframe = document.getElementById('videoIframe');
+
+if (playerSelect && iframe) {
+  // 初期状態で設定値に基づいて切り替え
+  if (defaultPlayer === 'original') {
+    iframe.src = `/watch.html?id=${videoId}`;
+  } else if (defaultPlayer === 'original360') {
+    iframe.src = `/watch.html?id=${videoId}&mode=360`;
+  } else {
+    iframe.src = `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  // ユーザーが後でselectを変えた場合も対応（既存のchangeイベントはそのまま）
+  playerSelect.addEventListener('change', () => {
+    if (playerSelect.value === 'official') {
+      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+    } else if (playerSelect.value === 'original360') {
+      iframe.src = `/watch.html?id=${videoId}&mode=360`;
+    } else {
+      iframe.src = `/watch.html?id=${videoId}`;
+    }
+  });
+}
+         
 window.addEventListener("message", (event) => {
   if (event.data === "video360-ready") {
     const btn = document.getElementById("downloadMainBtn");
@@ -1746,7 +1773,8 @@ function renderSettings() {
   // localStorage から現在の設定を読み込む（なければデフォルト値）
   const settings = {
     darkMode: localStorage.getItem('darkMode') === 'true',
-    autoPlay: localStorage.getItem('autoPlay') !== 'false',              // デフォルトON
+    autoPlay: localStorage.getItem('autoPlay') !== 'false',   
+    defaultPlayer: localStorage.getItem('defaultPlayer') || 'official',
     defaultRegion: localStorage.getItem('defaultRegion') || 'JP',
     commentSort: localStorage.getItem('commentSort') || 'top',          // top / new
     defaultQuality: localStorage.getItem('defaultQuality') || 'auto',
@@ -1784,6 +1812,20 @@ function renderSettings() {
           </select>
         </div>
       </div>
+
+      // 再生方法
+<div class="setting-group">
+  <h2>デフォルト再生方法</h2>
+  <label>動画を開いたときの初期プレイヤー</label>
+  <select id="defaultPlayerSelect">
+    <option value="official" ${settings.defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
+    <option value="original" ${settings.defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
+    <option value="original360" ${settings.defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２ (360p)</option>
+  </select>
+  <p style="font-size:13px; color:#606060; margin-top:8px;">
+    ※変更後、次に開く動画から適用されます
+  </p>
+</div>
 
       <!-- 検索・地域 -->
       <div class="setting-group">
@@ -1883,6 +1925,12 @@ function renderSettings() {
   document.getElementById('autoPlayToggle')?.addEventListener('change', e => {
     localStorage.setItem('autoPlay', e.target.checked);
   });
+
+ document.getElementById('defaultPlayerSelect')?.addEventListener('change', e => {
+    localStorage.setItem('defaultPlayer', e.target.value);
+    alert('デフォルト再生方法を変更しました。次回の動画から適用されます。');
+  });
+
 
   document.getElementById('defaultQualitySelect')?.addEventListener('change', e => {
     localStorage.setItem('defaultQuality', e.target.value);
