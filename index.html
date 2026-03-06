@@ -1264,11 +1264,10 @@ document.querySelectorAll('.sidebar-item').forEach(item => {
     } else if (target === 'history') {
       location.hash = 'history';
       renderHistory();
-    // .sidebar-item のクリックリスナー内（既存のものに追加）
-} else if (target === 'settings') {
-  location.hash = 'settings';
-  renderSettings();
-}
+    } else if (target === 'settings') {          // ← これが入っていることを確認
+      location.hash = 'settings';
+      renderSettings();
+    }
 
     if (sidebar.classList.contains('open')) {
       toggleMenu();
@@ -1637,6 +1636,8 @@ function renderByHash() {
       renderTools();
     } else if (k === 'history') {
       renderHistory();
+    } else if (k === 'settings') {
+      renderSettings();
     } else if (k === 'playgame') {
       const url = decodeURIComponent(v || '');
       const fakeGame = { title: "ゲームプレイ中", embedUrl: url, description: "埋め込みゲーム" };
