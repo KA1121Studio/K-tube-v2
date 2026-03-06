@@ -1041,28 +1041,41 @@ if (!streamsDesc) {
           `;
 
 // app.innerHTML の後（playerSelectを取得できる場所）に追加
+// renderWatch() 内の try ブロック内（app.innerHTML の直後あたりに置く）
+
+// デフォルトプレイヤーを読み込む
+const defaultPlayer = localStorage.getItem('defaultPlayer') || 'official';
+
+// app.innerHTML = ` ... ` の中の <select> を以下に
+<select id="playerSelect" style="margin-left:8px">
+  <option value="official" ${defaultPlayer === 'official' ? 'selected' : ''}>公式プレイヤー</option>
+  <option value="original" ${defaultPlayer === 'original' ? 'selected' : ''}>オリジナルプレイヤー</option>
+  <option value="original360" ${defaultPlayer === 'original360' ? 'selected' : ''}>オリジナルプレイヤー２</option>
+</select>
+
+
 const playerSelect = document.getElementById('playerSelect');
 const iframe = document.getElementById('videoIframe');
 
 if (playerSelect && iframe) {
-  // 初期状態で設定値に基づいて切り替え
+  // 初期状態で設定値に基づいて iframe を切り替え（これが重要！）
+  let initialSrc = `https://www.youtube.com/embed/${videoId}`;
   if (defaultPlayer === 'original') {
-    iframe.src = `/watch.html?id=${videoId}`;
+    initialSrc = `/watch.html?id=${videoId}`;
   } else if (defaultPlayer === 'original360') {
-    iframe.src = `/watch.html?id=${videoId}&mode=360`;
-  } else {
-    iframe.src = `https://www.youtube.com/embed/${videoId}`;
+    initialSrc = `/watch.html?id=${videoId}&mode=360`;
   }
+  iframe.src = initialSrc;
 
-  // ユーザーが後でselectを変えた場合も対応（既存のchangeイベントはそのまま）
+  // ユーザーが後で select を変えた場合も対応
   playerSelect.addEventListener('change', () => {
-    if (playerSelect.value === 'official') {
-      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+    let newSrc = `https://www.youtube.com/embed/${videoId}`;
+    if (playerSelect.value === 'original') {
+      newSrc = `/watch.html?id=${videoId}`;
     } else if (playerSelect.value === 'original360') {
-      iframe.src = `/watch.html?id=${videoId}&mode=360`;
-    } else {
-      iframe.src = `/watch.html?id=${videoId}`;
+      newSrc = `/watch.html?id=${videoId}&mode=360`;
     }
+    iframe.src = newSrc;
   });
 }
          
@@ -1145,19 +1158,7 @@ if (relatedList) {
   }
 }
 
-const playerSelect = document.getElementById('playerSelect');
-const iframe = document.getElementById('videoIframe');
-if (playerSelect && iframe) {
-  playerSelect.addEventListener('change', () => {
-    if (playerSelect.value === 'official') {
-      iframe.src = `https://www.youtube.com/embed/${videoId}`;
-    } else if (playerSelect.value === 'original360') {
-      iframe.src = `/watch.html?id=${videoId}&mode=360`;
-    } else {
-      iframe.src = `/watch.html?id=${videoId}`;
-    }
-  });
-}
+
 
         } catch (e) {
           console.error('renderWatch error:', e);
